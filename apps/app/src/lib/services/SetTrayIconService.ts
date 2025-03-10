@@ -125,6 +125,7 @@ async function initTray() {
 		icon: await getIconPath('IDLE'),
 		menu: trayMenu,
 		menuOnLeftClick: false,
+		tooltip: 'Whispering',
 		action: (e) => {
 			if (
 				e.type === 'Click' &&
