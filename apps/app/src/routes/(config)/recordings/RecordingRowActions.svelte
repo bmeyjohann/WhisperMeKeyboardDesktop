@@ -12,8 +12,8 @@
 		useUpdateRecordingWithToast,
 	} from '$lib/query/recordings/mutations';
 	import { useRecordingQuery } from '$lib/query/recordings/queries';
-	import { getTranscriberFromContext } from '$lib/query/singletons/transcriber';
-	import { getTransformerFromContext } from '$lib/query/singletons/transformer';
+	import { useTranscribeRecording } from '$lib/query/transcriber/mutations';
+	import { useTransformRecording } from '$lib/query/transform/mutations';
 	import { useLatestTransformationRunByRecordingIdQuery } from '$lib/query/transformationRuns/queries';
 	import type { Recording } from '$lib/services/db';
 	import { getRecordingTransitionId } from '$lib/utils/getRecordingTransitionId';
@@ -31,8 +31,8 @@
 	import EditRecordingDialog from './EditRecordingDialog.svelte';
 	import ViewTransformationRunsDialog from './ViewTransformationRunsDialog.svelte';
 
-	const transcriber = getTranscriberFromContext();
-	const transformer = getTransformerFromContext();
+	const { transcribeRecording } = useTranscribeRecording();
+	const { transformRecording } = useTransformRecording();
 	const { deleteRecordingWithToast } = useDeleteRecordingWithToast();
 	const { updateRecordingWithToast } = useUpdateRecordingWithToast();
 	const { downloadRecordingWithToast } = useDownloadRecordingWithToast();
@@ -75,7 +75,7 @@
 						? 'Retry transcription'
 						: 'Transcription failed - click to try again'}
 			onclick={() =>
-				transcriber.transcribeRecording.mutate({
+				transcribeRecording.mutate({
 					recording,
 					toastId: nanoid(),
 				})}
@@ -95,7 +95,7 @@
 
 		<SelectTransformationCombobox
 			onSelect={(transformation) =>
-				transformer.transformRecording.mutate({
+				transformRecording.mutate({
 					recordingId: recording.id,
 					transformationId: transformation.id,
 					toastId: nanoid(),

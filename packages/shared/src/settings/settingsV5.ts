@@ -77,6 +77,9 @@ export const settingsV5Schema = z.object({
 		'shortcuts.local.closeManualRecordingSession': z.string().nullable(),
 		'shortcuts.local.toggleVadRecording': z.string().nullable(),
 		'shortcuts.local.pushToTalk': z.string().nullable(),
+		'shortcuts.local.runSelectedTransformationOnClipboard': z
+			.string()
+			.nullable(),
 	} satisfies Record<
 		`shortcuts.local.${Command['id']}`,
 		z.ZodNullable<ZodString>
@@ -88,6 +91,9 @@ export const settingsV5Schema = z.object({
 		'shortcuts.global.closeManualRecordingSession': z.string().nullable(),
 		'shortcuts.global.toggleVadRecording': z.string().nullable(),
 		'shortcuts.global.pushToTalk': z.string().nullable(),
+		'shortcuts.global.runSelectedTransformationOnClipboard': z
+			.string()
+			.nullable(),
 	} satisfies Record<
 		`shortcuts.global.${Command['id']}`,
 		z.ZodNullable<ZodString>

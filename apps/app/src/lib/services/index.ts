@@ -134,6 +134,7 @@ const PlaySoundService = window.__TAURI_INTERNALS__
 export const RunTransformationService = createRunTransformationService({
 	HttpService,
 	DbTransformationsService,
+	ClipboardService,
 });
 
 /**

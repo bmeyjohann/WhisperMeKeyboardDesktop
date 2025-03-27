@@ -18,7 +18,7 @@
 	import { copyTextToClipboardWithToast } from '$lib/query/clipboard/mutations';
 	import { useDeleteRecordingsWithToast } from '$lib/query/recordings/mutations';
 	import { useRecordingsQuery } from '$lib/query/recordings/queries';
-	import { getTranscriberFromContext } from '$lib/query/singletons/transcriber';
+	import { useTranscribeRecording } from '$lib/query/transcriber/mutations';
 	import type { Recording } from '$lib/services/db';
 	import { cn } from '$lib/utils';
 	import { createPersistedState } from '$lib/utils/createPersistedState.svelte';
@@ -52,7 +52,7 @@
 	import RenderAudioUrl from './RenderAudioUrl.svelte';
 	import TranscribedTextDialog from './TranscribedTextDialog.svelte';
 
-	const transcriber = getTranscriberFromContext();
+	const { transcribeRecording } = useTranscribeRecording();
 	const { deleteRecordingsWithToast } = useDeleteRecordingsWithToast();
 
 	const columns: ColumnDef<Recording>[] = [
@@ -355,7 +355,7 @@
 						onclick={() =>
 							Promise.allSettled(
 								selectedRecordingRows.map((recording) =>
-									transcriber.transcribeRecording.mutate({
+									transcribeRecording.mutate({
 										recording: recording.original,
 										toastId: nanoid(),
 									}),

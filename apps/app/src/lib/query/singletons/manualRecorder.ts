@@ -11,19 +11,13 @@ import { noop } from '@tanstack/table-core';
 import { nanoid } from 'nanoid/non-secure';
 import { getContext, setContext } from 'svelte';
 import { queryClient } from '..';
-import type { Transcriber } from './transcriber';
-import type { Transformer } from './transformer';
+import { useTransformRecording } from '../transform/mutations';
+import { useTranscribeRecording } from '../transcriber/mutations';
 
 export type ManualRecorder = ReturnType<typeof createManualRecorder>;
 
-export const initManualRecorderInContext = ({
-	transcriber,
-	transformer,
-}: {
-	transcriber: Transcriber;
-	transformer: Transformer;
-}) => {
-	const manualRecorder = createManualRecorder({ transcriber, transformer });
+export const initManualRecorderInContext = () => {
+	const manualRecorder = createManualRecorder();
 	setContext('manualRecorder', manualRecorder);
 	return manualRecorder;
 };
@@ -37,17 +31,13 @@ const manualRecorderKeys = {
 	state: ['manualRecorder', 'state'] as const,
 };
 
-function createManualRecorder({
-	transcriber,
-	transformer,
-}: {
-	transcriber: Transcriber;
-	transformer: Transformer;
-}) {
+function createManualRecorder() {
 	const invalidateRecorderState = () =>
 		queryClient.invalidateQueries({ queryKey: manualRecorderKeys.state });
 
 	const { createRecording } = useCreateRecording();
+	const { transcribeRecording } = useTranscribeRecording();
+	const { transformRecording } = useTransformRecording();
 
 	const recorderState = createResultQuery(() => ({
 		queryKey: manualRecorderKeys.state,
@@ -190,7 +180,7 @@ function createManualRecorder({
 						}
 
 						const transcribeToastId = nanoid();
-						transcriber.transcribeRecording.mutate(
+						transcribeRecording.mutate(
 							{ recording: createdRecording, toastId: transcribeToastId },
 							{
 								onSuccess: () => {
@@ -198,7 +188,7 @@ function createManualRecorder({
 										settings.value['transformations.selectedTransformationId']
 									) {
 										const transformToastId = nanoid();
-										transformer.transformRecording.mutate({
+										transformRecording.mutate({
 											recordingId: createdRecording.id,
 											transformationId:
 												settings.value[

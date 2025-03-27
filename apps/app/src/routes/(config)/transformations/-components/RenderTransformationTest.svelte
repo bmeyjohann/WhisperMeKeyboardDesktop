@@ -2,7 +2,7 @@
 	import { LabeledTextarea } from '$lib/components/labeled/index.js';
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
-	import { getTransformerFromContext } from '$lib/query/singletons/transformer';
+	import { useTransformInput } from '$lib/query/transform/mutations';
 	import type { Transformation } from '$lib/services/db';
 	import { Loader2Icon, PlayIcon } from 'lucide-svelte';
 	import { nanoid } from 'nanoid/non-secure';
@@ -12,7 +12,7 @@
 	let input = $state('');
 	let output = $state('');
 
-	const transformer = getTransformerFromContext();
+	const { transformInput } = useTransformInput();
 </script>
 
 <Card.Header>
@@ -43,19 +43,19 @@
 
 	<Button
 		onclick={() =>
-			transformer.transformInput.mutate(
+			transformInput.mutate(
 				{ input, transformationId: transformation.id, toastId: nanoid() },
 				{ onSuccess: (o) => (output = o) },
 			)}
 		disabled={!input.trim() || transformation.steps.length === 0}
 		class="w-full"
 	>
-		{#if transformer.transformInput.isPending}
+		{#if transformInput.isPending}
 			<Loader2Icon class="mr-2 h-4 w-4 animate-spin" />
 		{:else}
 			<PlayIcon class="mr-2 h-4 w-4" />
 		{/if}
-		{transformer.transformInput.isPending
+		{transformInput.isPending
 			? 'Running Transformation...'
 			: 'Run Transformation'}
 	</Button>

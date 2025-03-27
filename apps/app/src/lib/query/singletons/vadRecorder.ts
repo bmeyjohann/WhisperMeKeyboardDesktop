@@ -8,19 +8,13 @@ import { Ok } from '@epicenterhq/result';
 import { nanoid } from 'nanoid/non-secure';
 import { getContext, setContext } from 'svelte';
 import { queryClient } from '..';
-import type { Transcriber } from './transcriber';
-import type { Transformer } from './transformer';
+import { useTransformRecording } from '../transform/mutations';
+import { useTranscribeRecording } from '../transcriber/mutations';
 
 export type VadRecorder = ReturnType<typeof createVadRecorder>;
 
-export const initVadRecorderInContext = ({
-	transcriber,
-	transformer,
-}: {
-	transcriber: Transcriber;
-	transformer: Transformer;
-}) => {
-	const vad = createVadRecorder({ transcriber, transformer });
+export const initVadRecorderInContext = () => {
+	const vad = createVadRecorder();
 	setContext('vad', vad);
 	return vad;
 };
@@ -34,17 +28,13 @@ const vadRecorderKeys = {
 	state: ['vadRecorder', 'state'] as const,
 };
 
-function createVadRecorder({
-	transcriber,
-	transformer,
-}: {
-	transcriber: Transcriber;
-	transformer: Transformer;
-}) {
+function createVadRecorder() {
 	const VadService = createVadServiceWeb();
 	const invalidateVadState = () =>
 		queryClient.invalidateQueries({ queryKey: vadRecorderKeys.state });
 	const { createRecording } = useCreateRecording();
+	const { transcribeRecording } = useTranscribeRecording();
+	const { transformRecording } = useTransformRecording();
 
 	const vadState = createResultQuery(() => ({
 		queryKey: vadRecorderKeys.state,
@@ -57,7 +47,8 @@ function createVadRecorder({
 	const ensureVadSession = createResultMutation(() => ({
 		mutationFn: async () => {
 			const ensureVadResult = await VadService.ensureVad({
-				deviceId: settings.value['recording.selectedAudioInputDeviceId'],
+				deviceId:
+					settings.value['recording.navigator.selectedAudioInputDeviceId'],
 				onSpeechEnd: (blob) => {
 					const toastId = nanoid();
 					toast.success({
@@ -108,7 +99,7 @@ function createVadRecorder({
 								});
 
 								const transcribeToastId = nanoid();
-								transcriber.transcribeRecording.mutate(
+								transcribeRecording.mutate(
 									{
 										recording: createdRecording,
 										toastId: transcribeToastId,
@@ -121,7 +112,7 @@ function createVadRecorder({
 												]
 											) {
 												const transformToastId = nanoid();
-												transformer.transformRecording.mutate({
+												transformRecording.mutate({
 													recordingId: createdRecording.id,
 													transformationId:
 														settings.value[

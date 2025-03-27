@@ -11,11 +11,13 @@ import type {
 	TransformationStep,
 } from './db';
 import type { HttpService } from './http/HttpService';
+import type { ClipboardService } from './clipboard/ClipboardService';
 
 type TransformErrorProperties = {
 	_tag: 'TransformError';
 	code:
 		| 'RECORDING_NOT_FOUND'
+		| 'FAILED_TO_GET_CLIPBOARD_TEXT'
 		| 'NO_INPUT'
 		| 'TRANSFORMATION_NOT_FOUND'
 		| 'NO_STEPS_CONFIGURED'
@@ -31,6 +33,11 @@ export type TransformResult<T> = Ok<T> | TransformError;
 
 export const TransformErrorToWhisperingErr = ({ error }: TransformError) => {
 	switch (error.code) {
+		case 'FAILED_TO_GET_CLIPBOARD_TEXT':
+			return WhisperingErr({
+				title: '⚠️ Failed to get clipboard text',
+				description: 'Could not get the text from the clipboard.',
+			});
 		case 'NO_INPUT':
 			return WhisperingErr({
 				title: '⚠️ Empty input',
@@ -93,9 +100,11 @@ export const TransformError = <
 export function createRunTransformationService({
 	DbTransformationsService,
 	HttpService,
+	ClipboardService,
 }: {
 	DbTransformationsService: DbTransformationsService;
 	HttpService: HttpService;
+	ClipboardService: ClipboardService;
 }) {
 	const handleStep = async ({
 		input,
@@ -408,6 +417,25 @@ export function createRunTransformationService({
 			input: string;
 			transformationId: string;
 		}): Promise<TransformResult<TransformationRun>> => {
+			if (!input.trim()) {
+				return TransformError({ code: 'NO_INPUT' });
+			}
+			return runTransformation({
+				input,
+				transformationId,
+				recordingId: null,
+			});
+		},
+		transformClipboard: async ({
+			transformationId,
+		}: {
+			transformationId: string;
+		}): Promise<TransformResult<TransformationRun>> => {
+			const getClipboardTextResult = await ClipboardService.getClipboardText();
+			if (!getClipboardTextResult.ok) {
+				return TransformError({ code: 'FAILED_TO_GET_CLIPBOARD_TEXT' });
+			}
+			const input = getClipboardTextResult.data;
 			if (!input.trim()) {
 				return TransformError({ code: 'NO_INPUT' });
 			}

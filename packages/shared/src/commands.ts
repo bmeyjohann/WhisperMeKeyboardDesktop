@@ -29,6 +29,12 @@ export const commands = [
 		defaultLocalShortcut: 'v',
 		defaultGlobalShortcut: "CommandOrControl+Shift+'",
 	},
+	{
+		id: 'runSelectedTransformationOnClipboard',
+		title: 'Run selected transformation on clipboard',
+		defaultLocalShortcut: 't',
+		defaultGlobalShortcut: 'CommandOrControl+Shift+:',
+	},
 ] as const;
 
 export type Command = (typeof commands)[number];
