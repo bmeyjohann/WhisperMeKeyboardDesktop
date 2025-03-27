@@ -26,6 +26,7 @@ export const getTransformerFromContext = () => {
 
 const transformerKeys = {
 	transformInput: ['transformer', 'transformInput'] as const,
+	transformClipboard: ['transformer', 'transformClipboard'] as const,
 	transformRecording: ['transformer', 'transformRecording'] as const,
 };
 
@@ -108,6 +109,83 @@ export function createTransformer() {
 			});
 		},
 	}));
+
+	const transformClipboard = createResultMutation(() => ({
+		mutationKey: transformerKeys.transformClipboard,
+		onMutate: ({ toastId }) => {
+			toast.loading({
+				id: toastId,
+				title: '🔄 Running transformation...',
+				description: 'Applying your selected transformation to the input...',
+			});
+		},
+		mutationFn: async ({
+			transformationId,
+		}: {
+			transformationId: string;
+			toastId: string;
+		}): Promise<WhisperingResult<string>> => {
+			const transformationRunResult =
+				await RunTransformationService.transformClipboard({
+					transformationId,
+				});
+
+			if (!transformationRunResult.ok) {
+				return TransformErrorToWhisperingErr(transformationRunResult);
+			}
+
+			const transformationRun = transformationRunResult.data;
+
+			if (transformationRun.error) {
+				return WhisperingErr({
+					title: '⚠️ Transformation failed',
+					description: transformationRun.error,
+					action: { type: 'more-details', error: transformationRun.error },
+				});
+			}
+
+			if (!transformationRun.output) {
+				return WhisperingErr({
+					title: '⚠️ Transformation produced no output',
+					description: 'The transformation completed but produced no output.',
+				});
+			}
+
+			return Ok(transformationRun.output);
+		},
+		onError: (error, { toastId }) => {
+			toast.error({ id: toastId, ...error });
+		},
+		onSuccess: (output, { toastId }) => {
+			void playSoundIfEnabled('transformationComplete');
+			maybeCopyAndPaste({
+				text: output,
+				toastId,
+				shouldCopy: settings.value['transformation.clipboard.copyOnSuccess'],
+				shouldPaste: settings.value['transformation.clipboard.pasteOnSuccess'],
+				statusToToastText: (status) => {
+					switch (status) {
+						case null:
+							return '🔄 Transformation complete!';
+						case 'COPIED':
+							return '🔄 Transformation complete and copied to clipboard!';
+						case 'COPIED+PASTED':
+							return '🔄 Transformation complete, copied to clipboard, and pasted!';
+					}
+				},
+			});
+		},
+		onSettled: (_data, _error, { transformationId }) => {
+			queryClient.invalidateQueries({
+				queryKey:
+					transformationRunKeys.runsByTransformationId(transformationId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: transformationsKeys.byId(transformationId),
+			});
+		},
+	}));
+
 	const transformRecording = createResultMutation(() => ({
 		mutationKey: transformerKeys.transformRecording,
 		onMutate: ({ toastId }) => {
@@ -203,13 +281,14 @@ export function createTransformer() {
 		get isCurrentlyTransforming() {
 			return (
 				queryClient.isMutating({
-					mutationKey: transformerKeys.transformInput,
+					mutationKey: transformerKeys.transformClipboard,
 				}) > 0 ||
 				queryClient.isMutating({
 					mutationKey: transformerKeys.transformRecording,
 				}) > 0
 			);
 		},
+		transformClipboard,
 		transformInput,
 		transformRecording,
 	};
