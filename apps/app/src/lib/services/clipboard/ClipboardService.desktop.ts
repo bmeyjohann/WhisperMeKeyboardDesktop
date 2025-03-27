@@ -1,7 +1,7 @@
 import { Ok, tryAsync } from '@epicenterhq/result';
 import { WhisperingErr, WhisperingWarning } from '@repo/shared';
 import { invoke } from '@tauri-apps/api/core';
-import { writeText } from '@tauri-apps/plugin-clipboard-manager';
+import { writeText, readText } from '@tauri-apps/plugin-clipboard-manager';
 import { type } from '@tauri-apps/plugin-os';
 import type { ClipboardService } from './ClipboardService';
 
@@ -19,6 +19,18 @@ export function createClipboardServiceDesktop(): ClipboardService {
 		});
 
 	return {
+		getClipboardText: async () =>
+			tryAsync({
+				try: () => readText(),
+				mapErr: (error) =>
+					WhisperingErr({
+						title: '⚠️ Unable to read clipboard',
+						description:
+							'There was an error reading from the clipboard using the Tauri Clipboard Manager API. Please try again.',
+						action: { type: 'more-details', error },
+					}),
+			}),
+
 		setClipboardText: (text) =>
 			tryAsync({
 				try: () => writeText(text),

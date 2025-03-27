@@ -2,6 +2,11 @@ import type { MaybePromise, WhisperingResult } from '@repo/shared';
 
 export type ClipboardService = {
 	/**
+	 * Reads the text from the user's clipboard.
+	 */
+	getClipboardText: () => Promise<WhisperingResult<string>>;
+
+	/**
 	 * Writes text to the user's clipboard.
 	 * @param text The text to write to the clipboard.
 	 */

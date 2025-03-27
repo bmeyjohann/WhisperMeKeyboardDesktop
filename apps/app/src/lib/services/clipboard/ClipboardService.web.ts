@@ -5,6 +5,18 @@ import type { ClipboardService } from './ClipboardService';
 
 export function createClipboardServiceWeb(): ClipboardService {
 	return {
+		getClipboardText: async () =>
+			tryAsync({
+				try: () => navigator.clipboard.readText(),
+				mapErr: (error) =>
+					WhisperingErr({
+						title: '⚠️ Unable to read clipboard',
+						description:
+							'There was an error reading from the clipboard using the browser Clipboard API. Please try again.',
+						action: { type: 'more-details', error },
+					}),
+			}),
+
 		setClipboardText: async (text) => {
 			const setClipboardResult = await tryAsync({
 				try: () => navigator.clipboard.writeText(text),
