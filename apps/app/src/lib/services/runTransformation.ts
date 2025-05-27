@@ -1,17 +1,17 @@
 import { settings } from '$lib/stores/settings.svelte';
 import { getErrorMessage } from '$lib/utils';
-import { Err, isErr, Ok, type Result, tryAsync } from '@epicenterhq/result';
-import { GoogleGenerativeAI, Outcome } from '@google/generative-ai';
-import { WhisperingError, type WhisperingResult } from '@repo/shared';
+import { Err, Ok, type Result, isErr, tryAsync } from '@epicenterhq/result';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { WhisperingError } from '@repo/shared';
 import { z } from 'zod';
 import { DbRecordingsService } from '.';
+import type { ClipboardService } from './clipboard/ClipboardService';
 import type {
 	DbTransformationsService,
 	TransformationRun,
 	TransformationStep,
 } from './db';
 import type { HttpService } from './http/HttpService';
-import type { ClipboardService } from './clipboard/ClipboardService';
 
 type TransformErrorProperties = {
 	_tag: 'TransformError';
@@ -34,10 +34,12 @@ export type TransformResult<T> = Ok<T> | TransformError;
 export const TransformErrorToWhisperingErr = ({ error }: TransformError) => {
 	switch (error.code) {
 		case 'FAILED_TO_GET_CLIPBOARD_TEXT':
-			return WhisperingErr({
-				title: '⚠️ Failed to get clipboard text',
-				description: 'Could not get the text from the clipboard.',
-			});
+			return Err(
+				WhisperingError({
+					title: '⚠️ Failed to get clipboard text',
+					description: 'Could not get the text from the clipboard.',
+				}),
+			);
 		case 'NO_INPUT':
 			return Err(
 				WhisperingError({
@@ -460,16 +462,16 @@ export function createRunTransformationService({
 		}: {
 			transformationId: string;
 		}): Promise<TransformResult<TransformationRun>> => {
-			const getClipboardTextResult = await ClipboardService.getClipboardText();
-			if (!getClipboardTextResult.ok) {
+			const { data: clipboardText, error: getClipboardTextError } =
+				await ClipboardService.getClipboardText();
+			if (getClipboardTextError) {
 				return TransformError({ code: 'FAILED_TO_GET_CLIPBOARD_TEXT' });
 			}
-			const input = getClipboardTextResult.data;
-			if (!input.trim()) {
+			if (!clipboardText.trim()) {
 				return TransformError({ code: 'NO_INPUT' });
 			}
 			return runTransformation({
-				input,
+				input: clipboardText,
 				transformationId,
 				recordingId: null,
 			});

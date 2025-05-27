@@ -6,10 +6,11 @@ import {
 } from '$lib/services/index.js';
 import { toast } from '$lib/services/toast';
 import { settings } from '$lib/stores/settings.svelte';
-import { WhisperingErr } from '@repo/shared';
+import { WhisperingError } from '@repo/shared';
 import { queryClient } from '..';
 import { useUpdateRecording } from '../recordings/mutations';
 import { maybeCopyAndPaste } from '../singletons/maybeCopyAndPaste';
+import { Err, Ok } from '@epicenterhq/result';
 
 const transcriberKeys = {
 	transcribe: ['transcriber', 'transcribe'] as const,
@@ -52,12 +53,14 @@ export function useTranscribeRecording() {
 				toastId: string;
 			}) => {
 				if (!recording.blob) {
-					return WhisperingErr({
-						title: '⚠️ Recording blob not found',
-						description: "Your recording doesn't have a blob to transcribe.",
-					});
+					return Err(
+						WhisperingError({
+							title: '⚠️ Recording blob not found',
+							description: "Your recording doesn't have a blob to transcribe.",
+						}),
+					);
 				}
-				const transcriptionResult =
+				const { data: transcribedText, error: transcriptionError } =
 					await userConfiguredServices.transcription.transcribe(
 						recording.blob,
 						{
@@ -66,8 +69,7 @@ export function useTranscribeRecording() {
 							temperature: settings.value['transcription.temperature'],
 						},
 					);
-				if (!transcriptionResult.ok) return transcriptionResult;
-				const transcribedText = transcriptionResult.data;
+				if (transcriptionError) return Err(transcriptionError);
 
 				await updateRecording.mutateAsync(
 					{ ...recording, transcribedText },
@@ -83,7 +85,7 @@ export function useTranscribeRecording() {
 					},
 				);
 
-				return transcriptionResult;
+				return Ok(transcribedText);
 			},
 			onError: (error, { recording, toastId }) => {
 				toast.error({ id: toastId, ...error });

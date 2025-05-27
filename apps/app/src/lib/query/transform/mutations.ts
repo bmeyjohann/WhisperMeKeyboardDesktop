@@ -1,14 +1,14 @@
 import { createResultMutation, playSoundIfEnabled } from '$lib/services';
 import { RunTransformationService } from '$lib/services/index.js';
-import { TransformErrorToWhisperingErr } from '$lib/services/runTransformation';
 import { toast } from '$lib/services/toast';
 import { settings } from '$lib/stores/settings.svelte';
-import { Ok } from '@epicenterhq/result';
-import { WhisperingErr, type WhisperingResult } from '@repo/shared';
+import { Err, Ok } from '@epicenterhq/result';
+import { WhisperingError, type WhisperingResult } from '@repo/shared';
 import { queryClient } from '..';
 import { maybeCopyAndPaste } from '../singletons/maybeCopyAndPaste';
 import { transformationRunKeys } from '../transformationRuns/queries';
 import { transformationsKeys } from '../transformations/queries';
+import { TransformErrorToWhisperingErr } from '$lib/services/runTransformation';
 
 export function useTransformInput() {
 	return {
@@ -28,34 +28,37 @@ export function useTransformInput() {
 				transformationId: string;
 				toastId: string;
 			}): Promise<WhisperingResult<string>> => {
-				const transformationRunResult =
+				const { data: transformRun, error: transformInputError } =
 					await RunTransformationService.transformInput({
 						input,
 						transformationId,
 					});
 
-				if (!transformationRunResult.ok) {
-					return TransformErrorToWhisperingErr(transformationRunResult);
+				if (transformInputError) {
+					return TransformErrorToWhisperingErr(Err(transformInputError));
 				}
 
-				const transformationRun = transformationRunResult.data;
-
-				if (transformationRun.error) {
-					return WhisperingErr({
-						title: '⚠️ Transformation failed',
-						description: transformationRun.error,
-						action: { type: 'more-details', error: transformationRun.error },
-					});
+				if (transformRun.error) {
+					return Err(
+						WhisperingError({
+							title: '⚠️ Transformation failed',
+							description: transformRun.error,
+							action: { type: 'more-details', error: transformRun.error },
+						}),
+					);
 				}
 
-				if (!transformationRun.output) {
-					return WhisperingErr({
-						title: '⚠️ Transformation produced no output',
-						description: 'The transformation completed but produced no output.',
-					});
+				if (!transformRun.output) {
+					return Err(
+						WhisperingError({
+							title: '⚠️ Transformation produced no output',
+							description:
+								'The transformation completed but produced no output.',
+						}),
+					);
 				}
 
-				return Ok(transformationRun.output);
+				return Ok(transformRun.output);
 			},
 			onError: (error, { toastId }) => {
 				toast.error({ id: toastId, ...error });
@@ -109,30 +112,33 @@ export function useTransformClipboard() {
 				transformationId: string;
 				toastId: string;
 			}): Promise<WhisperingResult<string>> => {
-				const transformationRunResult =
+				const { data: transformationRun, error: transformClipboardError } =
 					await RunTransformationService.transformClipboard({
 						transformationId,
 					});
 
-				if (!transformationRunResult.ok) {
-					return TransformErrorToWhisperingErr(transformationRunResult);
+				if (transformClipboardError) {
+					return TransformErrorToWhisperingErr(Err(transformClipboardError));
 				}
 
-				const transformationRun = transformationRunResult.data;
-
 				if (transformationRun.error) {
-					return WhisperingErr({
-						title: '⚠️ Transformation failed',
-						description: transformationRun.error,
-						action: { type: 'more-details', error: transformationRun.error },
-					});
+					return Err(
+						WhisperingError({
+							title: '⚠️ Transformation failed',
+							description: transformationRun.error,
+							action: { type: 'more-details', error: transformationRun.error },
+						}),
+					);
 				}
 
 				if (!transformationRun.output) {
-					return WhisperingErr({
-						title: '⚠️ Transformation produced no output',
-						description: 'The transformation completed but produced no output.',
-					});
+					return Err(
+						WhisperingError({
+							title: '⚠️ Transformation produced no output',
+							description:
+								'The transformation completed but produced no output.',
+						}),
+					);
 				}
 
 				return Ok(transformationRun.output);
@@ -192,41 +198,48 @@ export function useTransformRecording() {
 				transformationId: string;
 				toastId: string;
 			}): Promise<WhisperingResult<string>> => {
-				const transformationResult =
+				const { data: transformationRun, error: transformRecordingError } =
 					await RunTransformationService.transformRecording({
 						transformationId,
 						recordingId,
 					});
 
-				if (!transformationResult.ok) {
-					return WhisperingErr({
-						title: '⚠️ Transformation failed',
-						description:
-							'Failed to apply the transformation on the recording..',
-						action: {
-							type: 'more-details',
-							error: transformationResult.error,
-						},
-					});
+				if (transformRecordingError) {
+					return Err(
+						WhisperingError({
+							title: '⚠️ Transformation failed',
+							description:
+								'Failed to apply the transformation on the recording..',
+							action: {
+								type: 'more-details',
+								error: transformRecordingError,
+							},
+						}),
+					);
 				}
 
-				const transformationRun = transformationResult.data;
 				if (transformationRun.error) {
-					return WhisperingErr({
-						title: '⚠️ Transformation error',
-						description: 'Failed to apply the transformation on the recording.',
-						action: {
-							type: 'more-details',
-							error: transformationRun.error,
-						},
-					});
+					return Err(
+						WhisperingError({
+							title: '⚠️ Transformation error',
+							description:
+								'Failed to apply the transformation on the recording.',
+							action: {
+								type: 'more-details',
+								error: transformationRun.error,
+							},
+						}),
+					);
 				}
 
 				if (!transformationRun.output) {
-					return WhisperingErr({
-						title: '⚠️ Transformation produced no output',
-						description: 'The transformation completed but produced no output.',
-					});
+					return Err(
+						WhisperingError({
+							title: '⚠️ Transformation produced no output',
+							description:
+								'The transformation completed but produced no output.',
+						}),
+					);
 				}
 
 				return Ok(transformationRun.output);

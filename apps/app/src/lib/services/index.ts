@@ -1,5 +1,5 @@
 import type { Accessor } from '$lib/query/types';
-import type { Result } from '@epicenterhq/result';
+import { isErr, type Result } from '@epicenterhq/result';
 import type {
 	MaybePromise,
 	RECORDING_METHODS,
@@ -64,11 +64,10 @@ export function createResultQuery<
 		const { queryFn, ...optionValues } = options();
 		return {
 			...optionValues,
-
 			queryFn: async () => {
-				const { data, error } = await queryFn();
-				if (error) throw error;
-				return data;
+				const result = await queryFn();
+				if (isErr(result)) throw result.error;
+				return result.data;
 			},
 		};
 	});
@@ -96,9 +95,9 @@ export function createResultMutation<
 		return {
 			...optionValues,
 			mutationFn: async (args) => {
-				const { data, error } = await mutationFn(args);
-				if (error) throw error;
-				return data;
+				const result = await mutationFn(args);
+				if (isErr(result)) throw result.error;
+				return result.data;
 			},
 		};
 	});

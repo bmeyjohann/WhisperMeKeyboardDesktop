@@ -23,7 +23,7 @@ export function createClipboardServiceDesktop(): ClipboardService {
 			tryAsync({
 				try: () => readText(),
 				mapErr: (error) =>
-					WhisperingErr({
+					WhisperingError({
 						title: '⚠️ Unable to read clipboard',
 						description:
 							'There was an error reading from the clipboard using the Tauri Clipboard Manager API. Please try again.',

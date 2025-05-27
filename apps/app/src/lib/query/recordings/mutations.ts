@@ -5,7 +5,7 @@ import {
 	createResultMutation,
 } from '$lib/services/index.js';
 import { toast } from '$lib/services/toast';
-import { Ok } from '@epicenterhq/result';
+import { Err, Ok } from '@epicenterhq/result';
 import { WhisperingError } from '@repo/shared';
 import { recordingsKeys } from './queries';
 
@@ -91,8 +91,8 @@ export function useUpdateRecordingWithToast() {
 						description: 'Your recording could not be updated.',
 						action: { type: 'more-details', error: updateRecordingError },
 					});
-					toast.error(e.error);
-					return e;
+					toast.error(e);
+					return Err(e);
 				}
 
 				queryClient.setQueryData<Recording[]>(recordingsKeys.all, (oldData) => {
@@ -132,8 +132,8 @@ export function useDeleteRecordingWithToast() {
 						description: 'Your recording could not be deleted.',
 						action: { type: 'more-details', error: deleteRecordingError },
 					});
-					toast.error(e.error);
-					return e;
+					toast.error(e);
+					return Err(e);
 				}
 				queryClient.setQueryData<Recording[]>(recordingsKeys.all, (oldData) => {
 					if (!oldData) return [];
@@ -169,8 +169,8 @@ export function useDeleteRecordingsWithToast() {
 						description: 'Your recordings could not be deleted.',
 						action: { type: 'more-details', error: deleteRecordingsError },
 					});
-					toast.error(e.error);
-					return e;
+					toast.error(e);
+					return Err(e);
 				}
 
 				queryClient.setQueryData<Recording[]>(recordingsKeys.all, (oldData) => {
