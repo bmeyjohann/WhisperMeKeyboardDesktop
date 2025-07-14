@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recording Overlay</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .overlay-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            color: white;
+            text-align: center;
+        }
+
+        .icon {
+            font-size: 32px;
+            animation: pulse 2s infinite;
+        }
+
+        .text {
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .recording-icon {
+            color: #ff4444;
+        }
+
+        .processing-icon {
+            color: #ffa500;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        body:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.05);
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay-content">
+        <div id="recording-state" class="hidden">
+            <div class="icon recording-icon">🎙️</div>
+            <div class="text">Recording... (Click to stop)</div>
+        </div>
+        
+        <div id="processing-state" class="hidden">
+            <div class="icon processing-icon">⚙️</div>
+            <div class="text">Processing...</div>
+        </div>
+    </div>
+
+    <script>
+        const { invoke, listen } = window.__TAURI__;
+
+        const recordingState = document.getElementById('recording-state');
+        const processingState = document.getElementById('processing-state');
+
+        // Listen for state changes from the Rust backend
+        listen('overlay-state-changed', (event) => {
+            const state = event.payload;
+            console.log('Overlay state changed:', state);
+            
+            // Hide all states first
+            recordingState.classList.add('hidden');
+            processingState.classList.add('hidden');
+            
+            // Show the appropriate state
+            switch (state) {
+                case 'Recording':
+                    recordingState.classList.remove('hidden');
+                    break;
+                case 'Processing':
+                    processingState.classList.remove('hidden');
+                    break;
+                case 'Hidden':
+                    // All states remain hidden
+                    break;
+            }
+        });
+
+        // Handle clicks to stop recording
+        document.body.addEventListener('click', async () => {
+            // Only handle clicks when recording
+            if (!recordingState.classList.contains('hidden')) {
+                try {
+                    await invoke('stop_recording_from_overlay');
+                } catch (error) {
+                    console.error('Failed to stop recording from overlay:', error);
+                }
+            }
+        });
+
+        // Prevent context menu
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // Initialize with hidden state
+        recordingState.classList.add('hidden');
+        processingState.classList.add('hidden');
+    </script>
+</body>
+</html>

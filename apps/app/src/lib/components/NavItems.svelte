@@ -3,10 +3,12 @@
 	import { GithubIcon } from '$lib/components/icons';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { cn } from '$lib/utils';
+	import { auth0Service, isAuthenticated, authUser } from '$lib/services/auth0';
 	import { LogicalSize, getCurrentWindow } from '@tauri-apps/api/window';
 	import {
 		LayersIcon,
 		ListIcon,
+		LogOutIcon,
 		Minimize2Icon,
 		MoonIcon,
 		MoreVerticalIcon,
@@ -39,13 +41,13 @@
 			type: 'anchor',
 			href: '/settings',
 		},
-		{
-			label: 'View project on GitHub',
-			icon: GithubIcon,
-			href: 'https://github.com/braden-w/whispering',
-			type: 'anchor',
-			external: true,
-		},
+		// Show logout only when authenticated
+		...($isAuthenticated ? [{
+			label: 'Sign Out',
+			icon: LogOutIcon,
+			type: 'button',
+			action: () => auth0Service.logout(),
+		}] : []),
 		{
 			label: 'Toggle dark mode',
 			icon: SunIcon,

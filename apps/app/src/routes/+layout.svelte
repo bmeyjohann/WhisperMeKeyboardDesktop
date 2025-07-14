@@ -27,7 +27,7 @@
 </script>
 
 <svelte:head>
-	<title>Whispering</title>
+	<title>WhisperMe - AI Voice Keyboard</title>
 </svelte:head>
 
 <QueryClientProvider client={queryClient}>

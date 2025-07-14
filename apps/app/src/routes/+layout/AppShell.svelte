@@ -24,6 +24,8 @@
 	import { registerOnboarding } from './register-onboarding';
 	import { syncIconWithRecorderState } from './syncIconWithRecorderState.svelte';
 	import { settings } from '$lib/stores/settings.svelte';
+	import { auth0Service, isAuthenticated, authUser, isAuthLoading } from '$lib/services/auth0';
+	import LoginScreen from '$lib/components/LoginScreen.svelte';
 
 	const getRecorderStateQuery = createQuery(
 		rpc.manualRecorder.getRecorderState.options,
@@ -82,25 +84,31 @@
 	let { children } = $props();
 </script>
 
-<button
-	class="xxs:hidden hover:bg-accent hover:text-accent-foreground h-screen w-screen transform duration-300 ease-in-out"
-	onclick={commandCallbacks.toggleManualRecording}
->
-	<span
-		style="filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.5));"
-		class="text-[48px] leading-none"
+<!-- Show login screen if not authenticated -->
+{#if !$isAuthenticated}
+	<LoginScreen />
+{:else}
+	<!-- Main app content for authenticated users -->
+	<button
+		class="xxs:hidden hover:bg-accent hover:text-accent-foreground h-screen w-screen transform duration-300 ease-in-out"
+		onclick={commandCallbacks.toggleManualRecording}
 	>
-		{#if getRecorderStateQuery.data === 'RECORDING'}
-			⏹️
-		{:else}
-			🎙️
-		{/if}
-	</span>
-</button>
+		<span
+			style="filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.5));"
+			class="text-[48px] leading-none"
+		>
+			{#if getRecorderStateQuery.data === 'RECORDING'}
+				⏹️
+			{:else}
+				🎙️
+			{/if}
+		</span>
+	</button>
 
-<div class="xxs:flex hidden min-h-screen flex-col items-center gap-2">
-	{@render children()}
-</div>
+	<div class="xxs:flex hidden min-h-screen flex-col items-center gap-2">
+		{@render children()}
+	</div>
+{/if}
 
 <Toaster
 	offset={16}

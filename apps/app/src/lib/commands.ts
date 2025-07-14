@@ -181,6 +181,14 @@ const startCpalRecording = async () => {
 	});
 	console.info('CPAL Recording started');
 	rpc.sound.playSoundIfEnabled.execute('cpal-start');
+
+	// Show the recording overlay
+	try {
+		await invoke('show_recording_overlay');
+		console.info('Recording overlay shown for CPAL');
+	} catch (error) {
+		console.warn('Failed to show recording overlay for CPAL:', error);
+	}
 };
 
 type SatisfiedCommand = {

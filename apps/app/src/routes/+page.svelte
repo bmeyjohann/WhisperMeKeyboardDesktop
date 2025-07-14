@@ -24,7 +24,8 @@
 	} from '$lib/constants/audio';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { Loader2Icon } from 'lucide-svelte';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
+	import { listen } from '@tauri-apps/api/event';
 	import TranscribedTextDialog from './(config)/recordings/TranscribedTextDialog.svelte';
 
 	const getRecorderStateQuery = createQuery(
@@ -70,10 +71,33 @@
 	onDestroy(() => {
 		blobUrlManager.revokeCurrentUrl();
 	});
+
+	// Listen for stop recording events from the overlay
+	onMount(() => {
+		if (window.__TAURI_INTERNALS__) {
+			const unlisten = listen('stop-recording-requested', async () => {
+				console.info('Stop recording requested from overlay');
+				
+				// Check current recording state and stop if recording
+				const currentState = getRecorderStateQuery.data;
+				if (currentState === 'RECORDING') {
+					await commandCallbacks.toggleManualRecording();
+				}
+				
+				// Also check CPAL state
+				const cpalState = getCpalStateQuery.data;
+				if (cpalState === 'RECORDING') {
+					await commandCallbacks.toggleCpalRecording();
+				}
+			});
+			
+			return unlisten;
+		}
+	});
 </script>
 
 <svelte:head>
-	<title>Whispering</title>
+	<title>WhisperMe - AI Voice Keyboard</title>
 </svelte:head>
 
 <main class="flex flex-1 flex-col items-center justify-center gap-4">
