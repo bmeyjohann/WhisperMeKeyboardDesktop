@@ -10,6 +10,7 @@ pub mod recorder;
 pub mod overlay;
 pub mod context;
 pub mod backend;
+pub mod auth;
 use recorder::commands::{
     cancel_recording, close_recording_session, enumerate_recording_devices, get_recorder_state,
     init_recording_session, start_recording, stop_recording, AppData,
@@ -20,6 +21,7 @@ use overlay::{
 };
 use context::gather_context;
 use backend::{process_voice_with_backend, test_backend_connection};
+use auth::{get_stored_tokens, store_tokens, clear_stored_tokens, start_oauth_server, stop_oauth_server, get_oauth_callback, listen_oauth_callback, handle_deep_link, handle_deep_link_with_app, js_log};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -35,6 +37,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_deep_link::init())
         .manage(AppData::new());
 
     // When a new instance is opened, focus on the main window if it's already running
@@ -72,6 +75,17 @@ pub fn run() {
         // Backend integration
         process_voice_with_backend,
         test_backend_connection,
+        // Auth commands
+        get_stored_tokens,
+        store_tokens,
+        clear_stored_tokens,
+        start_oauth_server,
+        stop_oauth_server,
+        get_oauth_callback,
+        listen_oauth_callback,
+        handle_deep_link,
+        handle_deep_link_with_app,
+        js_log,
     ]);
 
     #[cfg(not(target_os = "macos"))]
@@ -95,6 +109,17 @@ pub fn run() {
         // Backend integration
         process_voice_with_backend,
         test_backend_connection,
+        // Auth commands
+        get_stored_tokens,
+        store_tokens,
+        clear_stored_tokens,
+        start_oauth_server,
+        stop_oauth_server,
+        get_oauth_callback,
+        listen_oauth_callback,
+        handle_deep_link,
+        handle_deep_link_with_app,
+        js_log,
     ]);
 
     let app = builder
@@ -104,6 +129,8 @@ pub fn run() {
     // Initialize overlay manager after app is created
     let overlay_manager = std::sync::Mutex::new(OverlayManager::new(app.handle().clone()));
     app.manage(overlay_manager);
+
+    // Deep link handling will be done through the plugin's events
 
     app.run(|_app_handle, event| {
         if let tauri::RunEvent::ExitRequested { .. } = event {

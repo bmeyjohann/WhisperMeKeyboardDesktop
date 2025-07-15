@@ -17,6 +17,7 @@
 	} from '$lib/constants/audio';
 	import { createQuery } from '@tanstack/svelte-query';
 	import { MediaQuery } from 'svelte/reactivity';
+	import { authUser, auth0Service } from '$lib/services/auth0';
 
 	const getRecorderStateQuery = createQuery(
 		rpc.manualRecorder.getRecorderState.options,
@@ -48,6 +49,24 @@
 			<span class="text-lg font-bold">whispering</span>
 		</WhisperingButton>
 	</div>
+	
+	<!-- User info and logout -->
+	{#if $authUser}
+		<div class="flex items-center gap-2 text-sm">
+			<span class="text-muted-foreground">Logged in as:</span>
+			<span class="font-medium">
+				{$authUser.name || $authUser.email || $authUser.sub}
+			</span>
+			<WhisperingButton
+				tooltipContent="Logout"
+				onclick={() => auth0Service.logout()}
+				variant="ghost"
+				size="sm"
+			>
+				Logout
+			</WhisperingButton>
+		</div>
+	{/if}
 	{#if settings.value['recording.mode'] === 'manual'}
 		{#if getRecorderStateQuery.data === 'RECORDING'}
 			<WhisperingButton
