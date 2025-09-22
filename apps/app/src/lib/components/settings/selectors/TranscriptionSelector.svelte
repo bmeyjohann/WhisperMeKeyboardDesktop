@@ -27,6 +27,8 @@
 				return settings.value[service.modelSettingKey];
 			case 'server':
 				return settings.value[service.serverUrlField];
+			case 'authenticated':
+				return 'Authenticated with WhisperMe';
 		}
 	}
 

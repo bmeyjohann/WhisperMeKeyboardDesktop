@@ -35,6 +35,7 @@ pub struct TranscriptionResult {
 pub async fn process_voice_recording(
     audio_data: Vec<u8>,
     context: Option<VoiceContext>,
+    auth_token: Option<String>,
 ) -> Result<VoiceProcessResponse, String> {
     info!("Processing voice recording with backend API");
     info!("Audio data size: {} bytes", audio_data.len());
@@ -63,10 +64,22 @@ pub async fn process_voice_recording(
     let client = reqwest::Client::new();
     
     debug!("Sending request to backend: {}", BACKEND_URL);
-    let response = client
+    
+    // Build request with optional authentication
+    let mut request_builder = client
         .post(BACKEND_URL)
         .json(&request_payload)
-        .timeout(std::time::Duration::from_secs(60))
+        .timeout(std::time::Duration::from_secs(60));
+    
+    // Add authentication header if token is provided
+    if let Some(token) = auth_token {
+        debug!("Adding authentication header");
+        request_builder = request_builder.header("Authorization", format!("Bearer {}", token));
+    } else {
+        warn!("No authentication token provided - request may fail");
+    }
+    
+    let response = request_builder
         .send()
         .await
         .map_err(|e| format!("Failed to send request: {}", e))?;
@@ -137,15 +150,17 @@ pub fn convert_audio_to_groq_format(audio_data: Vec<u8>) -> Result<Vec<u8>, Stri
 pub async fn process_voice_with_backend(
     audio_data: Vec<u8>,
     context: Option<VoiceContext>,
+    auth_token: Option<String>,
 ) -> Result<VoiceProcessResponse, String> {
     debug!("Processing voice recording via Tauri command");
+    debug!("Auth token provided: {}", auth_token.is_some());
     
     // Convert audio to proper format
     let converted_audio = convert_audio_to_groq_format(audio_data)
         .map_err(|e| format!("Audio conversion failed: {}", e))?;
     
     // Process with backend
-    process_voice_recording(converted_audio, context).await
+    process_voice_recording(converted_audio, context, auth_token).await
 }
 
 /// Test the backend connection

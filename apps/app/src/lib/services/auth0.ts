@@ -39,6 +39,7 @@ class Auth0Service {
 	private config: Auth0Config;
 	private codeVerifier: string | null = null;
 	private callbackPort = 3000;
+	private cachedTokens: (TokenResponse & { expiration_time?: number }) | null = null;
 
 	// Svelte stores for reactive state
 	public isLoading: Writable<boolean> = writable(false);
@@ -51,7 +52,7 @@ class Auth0Service {
 		this.config = {
 			domain: 'dev-v6bfenyhz8m15z6j.eu.auth0.com',
 			clientId: 'Nobjj5cwIKiVfUP2iSfIVVRuouNUqlno',
-			audience: '', // Remove audience if no backend API exists yet
+			audience: 'https://whisperme.app/api',
 			scope: 'openid profile email offline_access',
 			useCustomProtocol: true // Back to custom protocol for debugging
 		};
@@ -69,10 +70,16 @@ class Auth0Service {
 			const stored = await invoke<string | null>('get_stored_tokens');
 			if (stored) {
 				const tokens = JSON.parse(stored);
+				this.cachedTokens = tokens;
+
 				if (tokens.access_token) {
-					this.accessToken.set(tokens.access_token);
-					await this.getUserInfo(tokens.access_token);
-					this.isAuthenticated.set(true);
+					const expirationTime = tokens.expiration_time as number | undefined;
+					if (expirationTime && Date.now() >= expirationTime - 60_000) {
+						await this.refreshToken();
+						return;
+					}
+
+					await this.applyTokenState(tokens);
 				}
 			}
 		} catch (error) {
@@ -80,8 +87,9 @@ class Auth0Service {
 		}
 	}
 
-	private async storeTokens(tokens: TokenResponse) {
+	private async storeTokens(tokens: TokenResponse & { expiration_time?: number }) {
 		try {
+			this.cachedTokens = tokens;
 			await invoke('store_tokens', { tokens: JSON.stringify(tokens) });
 		} catch (error) {
 			console.error('Failed to store tokens:', error);
@@ -90,6 +98,7 @@ class Auth0Service {
 
 	private async clearStoredTokens() {
 		try {
+			this.cachedTokens = null;
 			await invoke('clear_stored_tokens');
 		} catch (error) {
 			console.error('Failed to clear tokens:', error);
@@ -117,6 +126,97 @@ class Auth0Service {
 			text += possible.charAt(Math.floor(Math.random() * possible.length));
 		}
 		return text;
+	}
+
+	private decodeIdToken(token: string): Auth0User | null {
+		try {
+			const parts = token.split('.');
+			if (parts.length < 2) {
+				return null;
+			}
+
+			const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+			const padLength = (4 - (base64.length % 4)) % 4;
+			const padded = base64 + '='.repeat(padLength);
+			const decoded = atob(padded);
+			const payload = JSON.parse(decoded);
+
+			return {
+				sub: payload.sub,
+				name: payload.name,
+				email: payload.email,
+				picture: payload.picture,
+				...payload
+			};
+		} catch (error) {
+			console.error('Failed to decode ID token:', error);
+			return null;
+		}
+	}
+
+	private async fetchUserInfoWithAccessToken(accessToken: string): Promise<Auth0User | null> {
+		try {
+			const userInfoUrl = `https://${this.config.domain}/userinfo`;
+			jsLog.info('=== FETCHING USER INFO ===');
+			jsLog.info(`URL: ${userInfoUrl}`);
+			jsLog.info(`Access token available: ${!!accessToken}`);
+
+			const response = await tauriFetch(userInfoUrl, {
+				headers: {
+					Authorization: `Bearer ${accessToken}`
+				}
+			});
+
+			jsLog.info(`User info response status: ${response.status}`);
+			jsLog.info(`User info response ok: ${response.ok}`);
+
+			if (!response.ok) {
+				jsLog.error(`User info request failed: ${response.status} ${response.statusText}`);
+				return null;
+			}
+
+			const userInfo: Auth0User = await response.json();
+			jsLog.info('=== USER INFO RECEIVED ===');
+			jsLog.info(`User subject: ${userInfo.sub}`);
+			jsLog.info(`User email: ${userInfo.email}`);
+			return userInfo;
+		} catch (error) {
+			jsLog.error('=== USER INFO ERROR ===');
+			jsLog.error(`Failed to get user info: ${error}`);
+			jsLog.error(`Error message: ${error instanceof Error ? error.message : 'Unknown error'}`);
+			jsLog.error(`Error stack: ${error instanceof Error ? error.stack : 'No stack trace'}`);
+			return null;
+		}
+	}
+
+	private async applyTokenState(tokens: TokenResponse & { expiration_time?: number }) {
+		this.accessToken.set(tokens.access_token);
+		this.cachedTokens = tokens;
+
+		let userInfo: Auth0User | null = null;
+		if (tokens.id_token) {
+			userInfo = this.decodeIdToken(tokens.id_token);
+		}
+
+		if (!userInfo) {
+			userInfo = await this.fetchUserInfoWithAccessToken(tokens.access_token);
+		}
+
+		if (userInfo) {
+			this.user.set(userInfo);
+		} else {
+			let existingUser: Auth0User | null = null;
+			const unsubscribe = this.user.subscribe((value) => {
+				existingUser = value;
+			});
+			unsubscribe();
+			if (!existingUser) {
+				this.user.set({ sub: 'unknown' });
+			}
+		}
+
+		this.isAuthenticated.set(true);
+		this.error.set(null);
 	}
 
 	public async login() {
@@ -475,20 +575,15 @@ class Auth0Service {
 			jsLog.info(`Received refresh token: ${!!tokens.refresh_token}`);
 			jsLog.info(`Token type: ${tokens.token_type}`);
 			
-			// Store tokens
+			// Store tokens with expiration time
 			jsLog.info('Storing tokens...');
-			await this.storeTokens(tokens);
-			this.accessToken.set(tokens.access_token);
-			jsLog.info('Access token stored in state');
-
-			// Get user info
-			jsLog.info('Fetching user info...');
-			await this.getUserInfo(tokens.access_token);
-			jsLog.info('User info retrieved');
-			
-			this.isAuthenticated.set(true);
-			jsLog.info('Authentication state set to true');
-
+			const expirationTime = Date.now() + (tokens.expires_in * 1000);
+			const tokenData = {
+				...tokens,
+				expiration_time: expirationTime
+			};
+			await this.storeTokens(tokenData);
+			await this.applyTokenState(tokenData);
 			jsLog.info('=== USER AUTHENTICATED SUCCESSFULLY ===');
 		} catch (error) {
 			jsLog.error('=== TOKEN EXCHANGE ERROR ===');
@@ -496,47 +591,6 @@ class Auth0Service {
 			jsLog.error(`Error message: ${error instanceof Error ? error.message : 'Unknown error'}`);
 			jsLog.error(`Error stack: ${error instanceof Error ? error.stack : 'No stack trace'}`);
 			throw error;
-		}
-	}
-
-	private async getUserInfo(accessToken: string) {
-		try {
-			const userInfoUrl = `https://${this.config.domain}/userinfo`;
-			
-			jsLog.info('=== FETCHING USER INFO ===');
-			jsLog.info(`URL: ${userInfoUrl}`);
-			jsLog.info(`Access token available: ${!!accessToken}`);
-			
-			const response = await tauriFetch(userInfoUrl, {
-				headers: {
-					'Authorization': `Bearer ${accessToken}`
-				}
-			});
-
-			jsLog.info(`User info response status: ${response.status}`);
-			jsLog.info(`User info response ok: ${response.ok}`);
-
-			if (!response.ok) {
-				jsLog.error(`User info request failed: ${response.status} ${response.statusText}`);
-				throw new Error(`Failed to fetch user info: ${response.status} ${response.statusText}`);
-			}
-
-			const userInfo: Auth0User = await response.json();
-			jsLog.info('=== USER INFO RECEIVED ===');
-			jsLog.info(`User subject: ${userInfo.sub}`);
-			jsLog.info(`User email: ${userInfo.email}`);
-			this.user.set(userInfo);
-			jsLog.info('User info stored in state');
-
-		} catch (error) {
-			jsLog.error('=== USER INFO ERROR ===');
-			jsLog.error(`Failed to get user info: ${error}`);
-			jsLog.error(`Error message: ${error instanceof Error ? error.message : 'Unknown error'}`);
-			jsLog.error(`Error stack: ${error instanceof Error ? error.stack : 'No stack trace'}`);
-			// Don't throw here, we still have valid tokens
-			// Set a minimal user object so authentication can complete
-			this.user.set({ sub: 'unknown' });
-			jsLog.info('Set fallback user info');
 		}
 	}
 
@@ -582,15 +636,123 @@ class Auth0Service {
 	}
 
 	public async getAccessToken(): Promise<string | null> {
-		// TODO: Add token refresh logic here if needed
+		if (this.cachedTokens?.access_token) {
+			const expirationTime = this.cachedTokens.expiration_time as number | undefined;
+			if (expirationTime && Date.now() >= expirationTime - 60_000) {
+				const refreshed = await this.refreshToken();
+				if (refreshed) {
+					return refreshed;
+				}
+			}
+			return this.cachedTokens.access_token;
+		}
+
 		let token: string | null = null;
-		this.accessToken.subscribe(value => token = value)();
+		const unsubscribe = this.accessToken.subscribe((value) => {
+			token = value;
+		});
+		unsubscribe();
+
+		if (token) {
+			return token;
+		}
+
+		await this.loadStoredTokens();
+
+		const unsubscribeAfterLoad = this.accessToken.subscribe((value) => {
+			token = value;
+		});
+		unsubscribeAfterLoad();
+
 		return token;
 	}
 
 	public async getAuthHeader(): Promise<string | null> {
 		const token = await this.getAccessToken();
 		return token ? `Bearer ${token}` : null;
+	}
+
+	public async refreshToken(): Promise<string | null> {
+		try {
+			jsLog.info('=== REFRESH TOKEN STARTED ===');
+			
+			// Get stored tokens to check for refresh token
+			const stored = await invoke<string | null>('get_stored_tokens');
+			if (!stored) {
+				jsLog.error('No stored tokens found for refresh');
+				return null;
+			}
+
+			const tokens = JSON.parse(stored);
+			this.cachedTokens = tokens;
+			if (!tokens.refresh_token) {
+				jsLog.error('No refresh token available');
+				return null;
+			}
+
+			// Check if token is still valid first
+			const currentTime = Date.now();
+			if (tokens.expiration_time && currentTime < tokens.expiration_time - (5 * 60 * 1000)) {
+				jsLog.info('Current token is still valid, no refresh needed');
+				this.accessToken.set(tokens.access_token);
+				return tokens.access_token || null;
+			}
+
+			jsLog.info('Refreshing access token...');
+
+			// Use refresh token to get new access token
+			const tokenUrl = `https://${this.config.domain}/oauth/token`;
+			
+			const body = new URLSearchParams({
+				grant_type: 'refresh_token',
+				client_id: this.config.clientId,
+				refresh_token: tokens.refresh_token
+			});
+
+			const response = await tauriFetch(tokenUrl, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded'
+				},
+				body: body.toString()
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				jsLog.error(`Token refresh failed: ${JSON.stringify(errorData)}`);
+				
+				// If refresh token is invalid, clear stored tokens and require re-login
+				if (response.status === 403 || response.status === 401) {
+					await this.clearStoredTokens();
+					this.isAuthenticated.set(false);
+					this.user.set(null);
+					this.accessToken.set(null);
+				}
+				
+				return null;
+			}
+
+			const newTokens: TokenResponse = await response.json();
+			
+			// Store new tokens with expiration time
+			const expirationTime = Date.now() + (newTokens.expires_in * 1000);
+			const tokenData = {
+				...newTokens,
+				expiration_time: expirationTime,
+				refresh_token: newTokens.refresh_token || tokens.refresh_token,
+				id_token: newTokens.id_token || tokens.id_token
+			};
+			
+			await this.storeTokens(tokenData);
+			await this.applyTokenState(tokenData);
+			
+			jsLog.info('Token refreshed successfully');
+			return this.cachedTokens?.access_token ?? null;
+
+		} catch (error) {
+			jsLog.error(`Token refresh error: ${error}`);
+			return null;
+		}
 	}
 }
 

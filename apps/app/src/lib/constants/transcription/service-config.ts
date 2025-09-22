@@ -15,6 +15,7 @@ export const TRANSCRIPTION_SERVICE_IDS = [
 	'Groq',
 	'speaches',
 	'ElevenLabs',
+	'WhisperMe',
 ] as const;
 
 type TranscriptionServiceId = (typeof TRANSCRIPTION_SERVICE_IDS)[number];
@@ -38,9 +39,14 @@ type ServerTranscriptionService = BaseTranscriptionService & {
 	serverUrlField: keyof Settings;
 };
 
+type AuthenticatedTranscriptionService = BaseTranscriptionService & {
+	type: 'authenticated';
+};
+
 type SatisfiedTranscriptionService =
 	| ApiTranscriptionService
-	| ServerTranscriptionService;
+	| ServerTranscriptionService
+	| AuthenticatedTranscriptionService;
 
 export const TRANSCRIPTION_SERVICES = [
 	{
@@ -79,6 +85,12 @@ export const TRANSCRIPTION_SERVICES = [
 		icon: ServerIcon,
 		serverUrlField: 'transcription.speaches.baseUrl',
 		type: 'server',
+	},
+	{
+		id: 'WhisperMe',
+		name: 'WhisperMe (Authenticated)',
+		icon: CloudIcon,
+		type: 'authenticated',
 	},
 ] as const satisfies SatisfiedTranscriptionService[];
 

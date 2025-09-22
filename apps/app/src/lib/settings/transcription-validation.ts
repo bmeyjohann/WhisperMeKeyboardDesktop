@@ -1,5 +1,7 @@
 import { TRANSCRIPTION_SERVICES, type TranscriptionService } from '$lib/constants/transcription';
 import { settings } from '$lib/stores/settings.svelte';
+import { isAuthenticated } from '$lib/services/auth0';
+import { get } from 'svelte/store';
 
 /**
  * Gets the currently selected transcription service.
@@ -15,7 +17,6 @@ export function getSelectedTranscriptionService(): TranscriptionService | undefi
  * Checks if a transcription service has all required configuration.
  * 
  * @param service - The transcription service to check
- * @param settings - The current settings object
  * @returns true if the service is properly configured, false otherwise
  */
 export function isTranscriptionServiceConfigured(
@@ -29,6 +30,9 @@ export function isTranscriptionServiceConfigured(
 		case 'server': {
 			const url = settings.value[service.serverUrlField];
 			return url !== '';
+		}
+		case 'authenticated': {
+			return get(isAuthenticated);
 		}
 		default: {
 			return true;

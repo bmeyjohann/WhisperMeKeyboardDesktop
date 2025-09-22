@@ -151,5 +151,11 @@ async function transcribeBlob(
 				apiKey: settings.value['apiKeys.elevenlabs'],
 				modelName: settings.value['transcription.elevenlabs.model'],
 			});
+		case 'WhisperMe':
+			return services.transcriptions.whisperme.transcribe(blob, {
+				outputLanguage: settings.value['transcription.outputLanguage'],
+				prompt: settings.value['transcription.prompt'],
+				temperature: settings.value['transcription.temperature'],
+			});
 	}
 }
