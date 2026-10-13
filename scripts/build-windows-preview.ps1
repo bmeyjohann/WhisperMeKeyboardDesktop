@@ -43,5 +43,13 @@ if (!(Test-Path -LiteralPath $binary)) { throw 'No executable was produced.' }
 $result = [ordered]@{version=(Get-Content (Join-Path $app 'src-tauri/tauri.conf.json') -Raw | ConvertFrom-Json).version;
     channel='private-preview'; createdAt=[DateTime]::UtcNow.ToString('o'); sha256=(Get-FileHash -LiteralPath $binary -Algorithm SHA256).Hash.ToLowerInvariant();
     executable=$binary; authenticode=(Get-AuthenticodeSignature -LiteralPath $binary).Status.ToString(); published=$false}
+if ($Installer) {
+    $setup = Get-ChildItem -LiteralPath (Join-Path $TargetDirectory 'release/bundle/nsis') -Filter '*_x64-setup.exe' |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if (!$setup) { throw 'The requested NSIS installer was not produced.' }
+    $result.installer = $setup.FullName
+    $result.installerSha256 = (Get-FileHash -LiteralPath $setup.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+    $result.installerAuthenticode = (Get-AuthenticodeSignature -LiteralPath $setup.FullName).Status.ToString()
+}
 $result | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $TargetDirectory 'packaging/windows-manifest.json') -Encoding utf8
 $result

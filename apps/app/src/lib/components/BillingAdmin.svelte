@@ -239,6 +239,11 @@
 				{(loaded.costs.audioSeconds / 60).toFixed(1)} audio minutes · {loaded
 					.costs.processingStarts} processing starts
 			</p>
+			<p>Pending reservations: {loaded.costs.pendingReservations}</p>
+			<p class="text-sm text-muted-foreground">
+				Pending reservations are work in progress. Final usage and estimated
+				costs may change as that work completes.
+			</p>
 			{#if loaded.costs.unknownSessions > 0 || loaded.costs.knownUsd === null}<p
 				>
 					Cost data is incomplete. Unknown costs are excluded from the known

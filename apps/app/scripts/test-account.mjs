@@ -145,6 +145,28 @@ test('admin costs preserve unknown sessions and null known costs without substit
 		}),
 	);
 });
+test('pending reservations default to zero only when omitted and preserve reported outstanding work', () => {
+	const payload = { success: true, plans: [plan], settings, costs };
+	assert.equal(
+		contract.parseAdminBilling(payload).costs.pendingReservations,
+		0,
+	);
+	assert.equal(
+		contract.parseAdminBilling({
+			...payload,
+			costs: { ...costs, pendingReservations: 4 },
+		}).costs.pendingReservations,
+		4,
+	);
+	for (const pendingReservations of [-1, 0.5, null, '4']) {
+		assert.throws(() =>
+			contract.parseAdminBilling({
+				...payload,
+				costs: { ...costs, pendingReservations },
+			}),
+		);
+	}
+});
 test('draft config rejects duplicate IDs, fractions in limits, bad rates and warning ratios; disabled flags remain disabled', () => {
 	assert.equal(
 		contract.billingDraftSchema.parse({ plans: [plan], settings }).settings

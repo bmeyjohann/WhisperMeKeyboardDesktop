@@ -3,7 +3,7 @@
     <img width="180" src="./apps/app/src-tauri/recorder-state-icons/studio_microphone.png" alt="WhisperMe">
   </a>
   <h1 align="center">WhisperMe</h1>
-  <p align="center">Press shortcut → speak → get text. Free and open source.</p>
+  <p align="center">Dictate, draft and refine text by voice.</p>
 </p>
 
 <p align="center">
@@ -46,13 +46,11 @@ Press a shortcut anywhere on your desktop → speak → get text in your clipboa
 
 **Try it in 2 minutes:** [Quick Start](#quick-start) | [Watch Demo (30s)](#demo)
 
-WhisperMe is the transcription app I built because I believe productivity tools should be free and accessible to everyone.
+WhisperMe provides hosted voice dictation and text editing with an authenticated account. A normal Stripe subscription and server-enforced usage foundation is available in the source but remains disabled until explicitly configured. No price or public paid release is announced by this repository.
 
-WhisperMe is free and open source—you own your data, you audit the code, and you control your privacy.
+Account settings show server access, usage/reset information, onboarding and reviewed feedback. An owner-only billing editor manages draft plans, expected provider rates and the Cerebras safety budget. Saving a price draft does not publish it or change an existing subscription.
 
-Bring your own API key from providers like `OpenAI`, `Groq`, or `ElevenLabs`, and pay only cents per hour instead of monthly subscriptions. Or use a local transcription service like `Speaches`, which keeps everything free and on-device. Your audio goes directly to your chosen service.
-
-Open source. No tracking. No paywalls.
+The upstream BYOK/local-provider material below describes inherited advanced capabilities. Hosted WhisperMe sends audio and necessary text context through its server and configured providers. Local history is not automatically synchronized or submitted as feedback. Retain upstream attribution and license notices when distributing builds.
 
 > **Note**: WhisperMe is designed for quick transcriptions, not long recordings. For extended recording sessions, use a dedicated recording app.
 

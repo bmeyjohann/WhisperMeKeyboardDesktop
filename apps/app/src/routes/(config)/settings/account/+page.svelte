@@ -111,6 +111,9 @@
 			onclick={refresh}>{loading ? 'Refreshing…' : 'Refresh account'}</button
 		>
 	</div>
+	{#if error}<p role="alert" class="rounded border p-4 break-words">
+			{error}
+		</p>{/if}
 	{#if $localTest}
 		<p role="status">
 			Account services, checkout and feedback are disabled during local voice
@@ -311,6 +314,23 @@
 					}}
 				/>{/if}
 			{#if account.canAdmin && showAdmin}<BillingAdmin />{/if}
+		{:else if !loading}
+			<section
+				class="space-y-3 rounded-xl border p-5"
+				aria-labelledby="account-unavailable-title"
+			>
+				<h2 id="account-unavailable-title" class="text-lg font-semibold">
+					Account details unavailable
+				</h2>
+				<p>
+					Your account access, subscription and usage could not be verified.
+					Refresh your account to retry.
+				</p>
+				<p class="text-sm text-muted-foreground">
+					If your session has expired, sign out below and sign in again. Your
+					local transcripts remain on this device.
+				</p>
+			</section>
 		{/if}
 		<button
 			class="underline"
@@ -319,7 +339,6 @@
 		>
 	{/if}
 	{#if notice}<p role="status">{notice}</p>{/if}
-	{#if error}<p role="alert">{error}</p>{/if}
 	<a class="inline-block underline" href="/">Return to Transcripts</a>
 </div>
 

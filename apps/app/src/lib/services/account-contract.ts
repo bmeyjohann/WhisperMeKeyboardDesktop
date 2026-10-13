@@ -86,6 +86,7 @@ const adminSchema = billingDraftSchema.and(
 			month: z.string(),
 			knownUsd: rate.nullable(),
 			unknownSessions: count,
+			pendingReservations: count.default(0),
 			sessionCount: count,
 			audioSeconds: rate,
 			processingStarts: count,
@@ -140,7 +141,7 @@ export function successPayload(value: unknown): Record<string, unknown> {
 	}
 	return payload;
 }
-function parse<T>(schema: z.ZodType<T>, value: unknown): T {
+function parse<T>(schema: z.ZodType<T, z.ZodTypeDef, unknown>, value: unknown): T {
 	const result = schema.safeParse(value);
 	if (!result.success) throw new AccountServiceError(502, 'invalid_response');
 	return result.data;
