@@ -1,7 +1,7 @@
 import { Err, Ok, tryAsync, type Result } from 'wellcrafted/result';
 import type { TaggedError } from 'wellcrafted/error';
 import type {
-	WhisperingRecordingState,
+	WhisperMeRecordingState,
 	CancelRecordingResult,
 } from '$lib/constants/audio';
 import { invoke as tauriInvoke } from '@tauri-apps/api/core';
@@ -42,10 +42,10 @@ export function createCpalRecorderService() {
 
 	return {
 		getRecorderState: async (): Promise<
-			Result<WhisperingRecordingState, RecordingServiceError>
+			Result<WhisperMeRecordingState, RecordingServiceError>
 		> => {
 			const { data: recorderState, error: getRecorderStateError } =
-				await invoke<WhisperingRecordingState>('get_recorder_state');
+				await invoke<WhisperMeRecordingState>('get_recorder_state');
 			if (getRecorderStateError)
 				return Err({
 					name: 'RecordingServiceError',
@@ -223,7 +223,7 @@ export function createCpalRecorderService() {
 		> => {
 			// Check current state first
 			const { data: recorderState, error: getStateError } =
-				await invoke<WhisperingRecordingState>('get_recorder_state');
+				await invoke<WhisperMeRecordingState>('get_recorder_state');
 			if (getStateError) {
 				return Err({
 					name: 'RecordingServiceError',

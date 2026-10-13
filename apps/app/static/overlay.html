@@ -1,143 +1,102 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recording Overlay</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            width: 100vw;
-            height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.8);
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-            cursor: pointer;
-            user-select: none;
-            transition: all 0.3s ease;
-        }
-
-        .overlay-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            padding: 12px;
-            color: white;
-            text-align: center;
-        }
-
-        .icon {
-            font-size: 32px;
-            animation: pulse 2s infinite;
-        }
-
-        .text {
-            font-size: 14px;
-            font-weight: 500;
-            opacity: 0.9;
-        }
-
-        .recording-icon {
-            color: #ff4444;
-        }
-
-        .processing-icon {
-            color: #ffa500;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        body:hover {
-            background: rgba(0, 0, 0, 0.9);
-            transform: scale(1.05);
-        }
-
-        .hidden {
-            display: none;
-        }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Recording Overlay</title>
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; height: 100%; background: transparent; font-family: 'Segoe UI', sans-serif; color: white; overflow: hidden; }
+body { padding: 8px; }
+.overlay { height: 100%; padding: 12px 16px; border-radius: 16px; border: 1px solid #ffffff40; background: #111e; display: flex; flex-direction: column; gap: 8px; }
+header { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #cbd5e1; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #f97316; }
+.recording .dot { background: #ef4444; }
+.captions { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
+#voice-transcript { flex-shrink: 0; overflow: hidden; font-size: 22px; line-height: 1.5; padding-block: 4px; text-align: center; white-space: nowrap; }
+#voice-transcript.processing-status { color: #cbd5e1; font-style: italic; font-size: 18px; }
+.expanded .captions { justify-content: flex-start; }
+.expanded #voice-transcript { flex: 1; min-height: 0; overflow: auto; text-align: left; font-size: 18px; user-select: text; white-space: pre-wrap; overflow-wrap: anywhere; }
+#voice-assistant { color: #93c5fd; font-size: 16px; line-height: 1.5; padding-block: 3px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; flex-shrink: 0; text-align: center; animation: question-in 160ms ease-out; }
+#voice-assistant:empty { display: none; }
+@keyframes question-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { #voice-assistant { animation: none; } }
+footer { display: flex; justify-content: center; gap: 6px; flex-shrink: 0; }
+button { color: white; background: #273244; border: 1px solid #64748b; border-radius: 8px; padding: 6px 9px; cursor: pointer; font: inherit; font-size: 12px; }
+button:focus-visible { outline: 2px solid #93c5fd; }
+[hidden] { display: none !important; }
+#voice-connection, #voice-retry, #voice-budget { flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #cbd5e1; font-size: 12px; line-height: 1.4; text-align: center; }
+#voice-connection:empty, #voice-retry:empty, #voice-budget:empty { display: none; }
+#voice-retry, #voice-budget { color: #fcd34d; }
+</style>
 </head>
 <body>
-    <div class="overlay-content">
-        <div id="recording-state" class="hidden">
-            <div class="icon recording-icon">🎙️</div>
-            <div class="text">Recording... (Click to stop)</div>
-        </div>
-        
-        <div id="processing-state" class="hidden">
-            <div class="icon processing-icon">⚙️</div>
-            <div class="text">Processing...</div>
-        </div>
-    </div>
-
-    <script>
-        const { invoke, listen } = window.__TAURI__;
-
-        const recordingState = document.getElementById('recording-state');
-        const processingState = document.getElementById('processing-state');
-
-        // Listen for state changes from the Rust backend
-        listen('overlay-state-changed', (event) => {
-            const state = event.payload;
-            console.log('Overlay state changed:', state);
-            
-            // Hide all states first
-            recordingState.classList.add('hidden');
-            processingState.classList.add('hidden');
-            
-            // Show the appropriate state
-            switch (state) {
-                case 'Recording':
-                    recordingState.classList.remove('hidden');
-                    break;
-                case 'Processing':
-                    processingState.classList.remove('hidden');
-                    break;
-                case 'Hidden':
-                    // All states remain hidden
-                    break;
-            }
-        });
-
-        // Handle clicks to stop recording
-        document.body.addEventListener('click', async () => {
-            // Only handle clicks when recording
-            if (!recordingState.classList.contains('hidden')) {
-                try {
-                    await invoke('stop_recording_from_overlay');
-                } catch (error) {
-                    console.error('Failed to stop recording from overlay:', error);
-                }
-            }
-        });
-
-        // Prevent context menu
-        document.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-        });
-
-        // Initialize with hidden state
-        recordingState.classList.add('hidden');
-        processingState.classList.add('hidden');
-    </script>
+<div id="overlay" class="overlay" hidden>
+<header><span class="dot"></span><span id="text">Listening…</span></header>
+<div class="captions">
+<div id="voice-connection" role="status"></div><div id="voice-retry" role="status"></div><div id="voice-budget" role="status"></div><div id="voice-assistant" aria-live="polite"></div>
+<div id="voice-transcript" aria-live="polite"></div>
+</div>
+<footer><button id="voice-stop" aria-label="Stop recording">■ Finish</button><span id="voice-actions" hidden><button id="voice-expand" aria-expanded="false">Show full result</button> <button id="voice-copy">Copy result</button> <button id="voice-dismiss">Dismiss</button></span></footer>
+</div>
+<script src="voice-subtitle.js"></script>
+<script>
+const invoke = window.__TAURI_INTERNALS__?.invoke ?? window.__TAURI__?.core?.invoke ?? window.__TAURI__?.invoke;
+const overlay = document.getElementById('overlay');
+let expanded = false;
+let lastPhase;
+async function setExpanded(value) {
+  expanded = value;
+  overlay.classList.toggle('expanded', expanded);
+  document.getElementById('voice-expand').setAttribute('aria-expanded', String(expanded));
+  document.getElementById('voice-expand').textContent = expanded ? 'Collapse' : 'Show full result';
+  if (invoke) await invoke('voice_overlay_expand', { expanded }).catch(() => {});
+}
+window.__WM_RENDER_VOICE = () => {
+  const data = window.__WM_VOICE || {};
+  const idle = data.phase === 'idle';
+  if (!idle && lastPhase === 'idle') void setExpanded(false);
+  lastPhase = data.phase;
+  document.getElementById('text').textContent = ({connecting:'Connecting · microphone is recording',recording:'Listening',processing:'Finishing…',idle:'Voice result'})[data.phase] || 'Listening';
+  const full = data.result ?? data.transcript ?? '';
+  const speech = document.getElementById('voice-transcript');
+  const status = data.phase === 'processing' ? (String(data.statusText || '').trim() || 'Formatting…') : '';
+  speech.classList.toggle('processing-status', !!status);
+  speech.textContent = status ? voiceSubtitle(status) : idle && expanded ? full : voiceSubtitle(full);
+  if (!(idle && expanded)) speech.scrollLeft = speech.scrollWidth;
+  document.getElementById('voice-connection').textContent = data.connectionStatus || ''; document.getElementById('voice-retry').textContent = data.retryText || ''; document.getElementById('voice-budget').textContent = data.budgetWarning || '';
+  for (const id of ['voice-connection', 'voice-retry', 'voice-budget']) document.getElementById(id).title = document.getElementById(id).textContent;
+  document.getElementById('voice-assistant').textContent = (data.assistant || '').trim().replace(/\s+/gu, ' ');
+  document.getElementById('voice-actions').hidden = !idle;
+  document.getElementById('voice-stop').hidden = !['connecting','recording'].includes(data.phase);
+  document.getElementById('voice-copy').textContent = typeof data.result === 'string' ? 'Copy result' : 'Copy transcript';
+  document.getElementById('voice-expand').hidden = !full;
+};
+new ResizeObserver(() => {
+  const speech = document.getElementById('voice-transcript');
+  if (!expanded) speech.scrollLeft = speech.scrollWidth;
+}).observe(document.getElementById('voice-transcript'));
+window.__WM_OVERLAY_SET_STATE = (state) => {
+  const normalized = String(state).toLowerCase();
+  overlay.hidden = normalized === 'hidden';
+  overlay.classList.toggle('recording', normalized === 'recording');
+};
+document.getElementById('voice-stop').onclick = async () => { if (invoke) await invoke('stop_recording_from_overlay'); };
+document.getElementById('voice-expand').onclick = async () => {
+  if (window.__WM_VOICE?.phase !== 'idle') return;
+  await setExpanded(!expanded);
+  window.__WM_RENDER_VOICE();
+};
+document.getElementById('voice-copy').onclick = async () => {
+  const data = window.__WM_VOICE || {};
+  try {
+    if (!invoke) throw new Error();
+    await invoke('plugin:clipboard-manager|write_text', { text: data.result ?? data.transcript ?? '' });
+    document.getElementById('voice-copy').textContent = 'Copied';
+  } catch { document.getElementById('voice-assistant').textContent = 'Could not copy. Expand the result to select the text.'; }
+};
+document.getElementById('voice-dismiss').onclick = async () => { if (invoke) await invoke('hide_recording_overlay'); };
+if (invoke) invoke('get_overlay_state').then(window.__WM_OVERLAY_SET_STATE).catch(() => {});
+</script>
 </body>
 </html>
+

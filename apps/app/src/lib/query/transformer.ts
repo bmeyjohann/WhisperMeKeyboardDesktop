@@ -14,7 +14,7 @@ import {
 } from 'wellcrafted/result';
 import type { TaggedError } from 'wellcrafted/error';
 import { extractErrorMessage } from 'wellcrafted/error';
-import type { WhisperingError, WhisperingResult } from '$lib/result';
+import type { WhisperMeError, WhisperMeResult } from '$lib/result';
 import { defineMutation } from './_utils';
 import { queryClient } from './index';
 import { transformationRunKeys } from './transformationRuns';
@@ -36,9 +36,9 @@ export const transformer = {
 		}: {
 			input: string;
 			transformation: Transformation;
-		}): Promise<WhisperingResult<string>> => {
+		}): Promise<WhisperMeResult<string>> => {
 			const getTransformationOutput = async (): Promise<
-				Result<string, WhisperingError>
+				Result<string, WhisperMeError>
 			> => {
 				const { data: transformationRun, error: transformationRunError } =
 					await runTransformation({
@@ -49,7 +49,7 @@ export const transformer = {
 
 				if (transformationRunError)
 					return Err({
-						name: 'WhisperingError',
+						name: 'WhisperMeError',
 						title: '⚠️ Transformation failed',
 						description: transformationRunError.message,
 						action: { type: 'more-details', error: transformationRunError },
@@ -57,7 +57,7 @@ export const transformer = {
 
 				if (transformationRun.status === 'failed') {
 					return Err({
-						name: 'WhisperingError',
+						name: 'WhisperMeError',
 						title: '⚠️ Transformation failed',
 						description: transformationRun.error,
 						action: { type: 'more-details', error: transformationRun.error },
@@ -66,7 +66,7 @@ export const transformer = {
 
 				if (!transformationRun.output) {
 					return Err({
-						name: 'WhisperingError',
+						name: 'WhisperMeError',
 						title: '⚠️ Transformation produced no output',
 						description: 'The transformation completed but produced no output.',
 					});
@@ -101,14 +101,14 @@ export const transformer = {
 		}): Promise<
 			Result<
 				TransformationRunCompleted | TransformationRunFailed,
-				WhisperingError
+				WhisperMeError
 			>
 		> => {
 			const { data: recording, error: getRecordingError } =
 				await services.db.getRecordingById(recordingId);
 			if (getRecordingError || !recording) {
 				return Err({
-					name: 'WhisperingError',
+					name: 'WhisperMeError',
 					title: '⚠️ Recording not found',
 					description: 'Could not find the selected recording.',
 				});
@@ -123,7 +123,7 @@ export const transformer = {
 
 			if (transformationRunError)
 				return Err({
-					name: 'WhisperingError',
+					name: 'WhisperMeError',
 					title: '⚠️ Transformation failed',
 					description: transformationRunError.message,
 					action: { type: 'more-details', error: transformationRunError },

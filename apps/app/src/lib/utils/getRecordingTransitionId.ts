@@ -15,7 +15,7 @@ export function getTransformationStepRunTransitionId({
 	propertyName,
 }: {
 	stepRunId: string;
-	propertyName: keyof TransformationRun;
+	propertyName: keyof TransformationRun | 'output' | 'error';
 }): string {
 	return `transformation-run-${stepRunId}-${propertyName}` as const;
 }

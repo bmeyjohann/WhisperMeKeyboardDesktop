@@ -8,7 +8,11 @@ interface RequestOptions extends RequestInit {
 class HttpClient {
 	private baseURL: string;
 
-	constructor(baseURL: string = '') {
+	constructor(
+		baseURL: string = '',
+		private fetcher: typeof fetch = (...args) => fetch(...args),
+		private responseReader?: (response: Response) => Promise<unknown>,
+	) {
 		this.baseURL = baseURL;
 	}
 
@@ -44,7 +48,7 @@ class HttpClient {
 			const defaultHeaders = await this.getHeaders(requireAuth);
 			const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
 
-			const response = await fetch(url, {
+			const response = await this.fetcher(url, {
 				...fetchOptions,
 				headers: {
 					...defaultHeaders,
@@ -58,7 +62,7 @@ class HttpClient {
 				if (refreshedToken) {
 					// Retry the request with the new token
 					const retryHeaders = await this.getHeaders(requireAuth);
-					const retryResponse = await fetch(url, {
+					const retryResponse = await this.fetcher(url, {
 						...fetchOptions,
 						headers: {
 							...retryHeaders,
@@ -66,17 +70,20 @@ class HttpClient {
 						},
 					});
 
+					if (this.responseReader) return await this.responseReader(retryResponse) as T;
 					if (!retryResponse.ok) {
 						throw new Error(`HTTP error! status: ${retryResponse.status}`);
 					}
 
 					return await retryResponse.json();
 				} else {
+					if (this.responseReader) return await this.responseReader(response) as T;
 					// Token refresh failed, redirect to login
 					throw new Error('Authentication expired. Please log in again.');
 				}
 			}
 
+			if (this.responseReader) return await this.responseReader(response) as T;
 			if (!response.ok) {
 				const errorText = await response.text();
 				throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
@@ -90,7 +97,7 @@ class HttpClient {
 				return (await response.text()) as unknown as T;
 			}
 		} catch (error) {
-			console.error('HTTP request failed:', error);
+			if (!this.responseReader) console.error('HTTP request failed:', error);
 			throw error;
 		}
 	}
@@ -106,7 +113,7 @@ class HttpClient {
 	// POST request
 	async post<T>(
 		endpoint: string,
-		data?: any,
+		data?: unknown,
 		options: RequestOptions = {}
 	): Promise<T> {
 		return this.makeRequest<T>(endpoint, {
@@ -119,7 +126,7 @@ class HttpClient {
 	// PUT request
 	async put<T>(
 		endpoint: string,
-		data?: any,
+		data?: unknown,
 		options: RequestOptions = {}
 	): Promise<T> {
 		return this.makeRequest<T>(endpoint, {
@@ -132,7 +139,7 @@ class HttpClient {
 	// PATCH request
 	async patch<T>(
 		endpoint: string,
-		data?: any,
+		data?: unknown,
 		options: RequestOptions = {}
 	): Promise<T> {
 		return this.makeRequest<T>(endpoint, {
@@ -162,9 +169,9 @@ class HttpClient {
 		const formData = new FormData();
 		formData.append('file', file);
 
-		Object.entries(additionalFields).forEach(([key, value]) => {
+		for (const [key, value] of Object.entries(additionalFields)) {
 			formData.append(key, value);
-		});
+		}
 
 		try {
 			const headers: Record<string, string> = {};
@@ -230,4 +237,4 @@ export const apiClient = new HttpClient('https://whisperme-app.com/api'); // You
 export const httpClient = new HttpClient(); // For external APIs
 
 // Export the class for custom instances
-export { HttpClient }; 
+export { HttpClient };

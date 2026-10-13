@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as SectionHeader from '$lib/components/ui/section-header';
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import {
 		LabeledInput,
 		LabeledSelect,
@@ -156,7 +156,7 @@
 								/>
 							</div>
 							<div class="flex items-center gap-2">
-								<WhisperingButton
+								<WhisperMeButton
 									tooltipContent="Duplicate step"
 									variant="ghost"
 									size="icon"
@@ -164,8 +164,8 @@
 									onclick={() => duplicateStep(index)}
 								>
 									<CopyIcon class="size-4" />
-								</WhisperingButton>
-								<WhisperingButton
+								</WhisperMeButton>
+								<WhisperMeButton
 									tooltipContent="Delete step"
 									variant="ghost"
 									size="icon"
@@ -173,7 +173,7 @@
 									onclick={() => removeStep(index)}
 								>
 									<TrashIcon class="size-4" />
-								</WhisperingButton>
+								</WhisperMeButton>
 							</div>
 						</div>
 						{#if step.type === 'prompt_transform'}

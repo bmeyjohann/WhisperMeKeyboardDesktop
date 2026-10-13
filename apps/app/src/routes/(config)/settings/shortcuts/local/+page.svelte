@@ -9,7 +9,7 @@
 </script>
 
 <svelte:head>
-	<title>Local Shortcuts - Whispering</title>
+	<title>Local Shortcuts - WhisperMe</title>
 </svelte:head>
 
 <section>
@@ -25,7 +25,7 @@
 			</div>
 			<p class="text-sm text-muted-foreground">
 				Set keyboard shortcuts that work when the app is in focus. These
-				shortcuts will only trigger when Whispering is the active application.
+				shortcuts will only trigger when WhisperMe is the active application.
 			</p>
 		</header>
 		<Button

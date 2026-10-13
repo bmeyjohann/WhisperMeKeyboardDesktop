@@ -14,7 +14,7 @@
 		FilterXIcon,
 		LayersIcon,
 	} from 'lucide-svelte';
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { useCombobox } from '$lib/components/useCombobox.svelte';
 
@@ -54,7 +54,7 @@
 <Popover.Root bind:open={combobox.open}>
 	<Popover.Trigger bind:ref={combobox.triggerRef}>
 		{#snippet child({ props })}
-			<WhisperingButton
+			<WhisperMeButton
 				{...props}
 				class={cn('relative', className)}
 				tooltipContent={selectedTransformation
@@ -78,7 +78,7 @@
 						class="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-primary before:absolute before:left-0 before:top-0 before:h-full before:w-full before:rounded-full before:bg-primary/50 before:animate-ping"
 					></span>
 				{/if}
-			</WhisperingButton>
+			</WhisperMeButton>
 		{/snippet}
 	</Popover.Trigger>
 	<Popover.Content class="w-80 max-w-xl p-0">

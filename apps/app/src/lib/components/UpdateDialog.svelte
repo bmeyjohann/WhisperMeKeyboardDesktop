@@ -86,7 +86,7 @@
 					case 'Finished':
 						toast.success('Update installed successfully!', {
 							action: {
-								label: 'Restart Whispering',
+								label: 'Restart WhisperMe',
 								onClick: () => relaunch(),
 							},
 							cancel: {

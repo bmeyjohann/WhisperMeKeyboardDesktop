@@ -5,7 +5,7 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { HelpCircle, ExternalLink, AlertTriangle } from 'lucide-svelte';
 	import { Badge } from '$lib/components/ui/badge/index.js';
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import {
 		KEYBOARD_EVENT_SUPPORTED_KEY_SECTIONS,
 		ACCELERATOR_SECTIONS,
@@ -43,7 +43,7 @@
 	} as const;
 </script>
 
-<WhisperingButton
+<WhisperMeButton
 	variant="ghost"
 	size="icon"
 	class="size-6"
@@ -52,7 +52,7 @@
 >
 	<HelpCircle class="size-4" />
 	<span class="sr-only">Shortcut format help</span>
-</WhisperingButton>
+</WhisperMeButton>
 
 <Dialog.Root bind:open={dialogOpen}>
 	<Dialog.Content class="sm:max-w-3xl">

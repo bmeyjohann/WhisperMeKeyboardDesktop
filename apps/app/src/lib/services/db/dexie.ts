@@ -28,14 +28,14 @@ export type DbServiceError = TaggedError<'DbServiceError'>;
 
 const DB_NAME = 'RecordingDB';
 
-class WhisperingDatabase extends Dexie {
+class WhisperMeDatabase extends Dexie {
 	recordings!: Dexie.Table<RecordingsDbSchemaV5['recordings'], string>;
 	transformations!: Dexie.Table<
-		RecordingsDbSchemaV5['transformations'],
+		Transformation,
 		string
 	>;
 	transformationRuns!: Dexie.Table<
-		RecordingsDbSchemaV5['transformationRuns'],
+		TransformationRun,
 		string
 	>;
 
@@ -347,7 +347,7 @@ export function createDbServiceDexie({
 }: {
 	DownloadService: DownloadService;
 }) {
-	const db = new WhisperingDatabase({ DownloadService });
+	const db = new WhisperMeDatabase({ DownloadService });
 	return {
 		async getAllRecordings(): Promise<Result<Recording[], DbServiceError>> {
 			return tryAsync({

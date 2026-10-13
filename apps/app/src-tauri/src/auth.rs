@@ -6,6 +6,70 @@ use serde_json::{json, Value};
 use tiny_http::{Server, Response, Header};
 use url::Url;
 
+const AUTH0_TOKEN_URL: &str = "https://dev-v6bfenyhz8m15z6j.eu.auth0.com/oauth/token";
+const AUTH0_CLIENT_ID: &str = "Nobjj5cwIKiVfUP2iSfIVVRuouNUqlno";
+
+#[derive(serde::Deserialize)]
+#[serde(tag = "grant_type", rename_all = "snake_case", deny_unknown_fields)]
+pub enum TokenGrant {
+    AuthorizationCode { code: String, code_verifier: String },
+    RefreshToken { refresh_token: String },
+}
+
+fn token_request(client: &reqwest::Client, grant: &TokenGrant) -> reqwest::RequestBuilder {
+    let mut form = vec![("client_id", AUTH0_CLIENT_ID)];
+    match grant {
+        TokenGrant::AuthorizationCode { code, code_verifier } => {
+            form.extend([("grant_type", "authorization_code"), ("code", code.as_str()),
+                ("code_verifier", code_verifier.as_str()), ("redirect_uri", "http://localhost:3000/callback")]);
+        }
+        TokenGrant::RefreshToken { refresh_token } => {
+            form.extend([("grant_type", "refresh_token"), ("refresh_token", refresh_token.as_str())]);
+        }
+    }
+    // Native OAuth requests must not inherit the webview Origin header. Auth0 suppresses
+    // non-rotating refresh tokens for browser-originated token exchanges.
+    client.post(AUTH0_TOKEN_URL).timeout(std::time::Duration::from_secs(5)).form(&form)
+}
+
+#[tauri::command]
+pub async fn auth0_token_request(grant: TokenGrant) -> Result<Value, String> {
+    let client = reqwest::Client::builder().redirect(reqwest::redirect::Policy::none())
+        .build().map_err(|_| "Could not initialize authentication transport")?;
+    let response = token_request(&client, &grant).send().await
+        .map_err(|_| "Authentication request failed or timed out")?;
+    let status = response.status().as_u16();
+    let payload: Value = response.json().await
+        .map_err(|_| "Invalid authentication response")?;
+    Ok(json!({ "status": status, "payload": payload }))
+}
+
+#[cfg(test)]
+mod token_request_tests {
+    use super::*;
+
+    #[test]
+    fn native_token_grants_are_fixed_destination_and_have_no_browser_origin() {
+        let client = reqwest::Client::new();
+        for (grant, expected) in [
+            (TokenGrant::AuthorizationCode { code: "synthetic-code".into(), code_verifier: "synthetic-verifier".into() }, "authorization_code"),
+            (TokenGrant::RefreshToken { refresh_token: "synthetic-refresh".into() }, "refresh_token"),
+        ] {
+            let request = token_request(&client, &grant).build().unwrap();
+            assert_eq!(request.url().as_str(), AUTH0_TOKEN_URL);
+            assert!(request.headers().get(reqwest::header::ORIGIN).is_none());
+            assert_eq!(request.timeout(), Some(&std::time::Duration::from_secs(5)));
+            let body = request.body().unwrap().as_bytes().unwrap();
+            let form: HashMap<_, _> = url::form_urlencoded::parse(body).collect();
+            assert_eq!(form.get("client_id").unwrap(), AUTH0_CLIENT_ID);
+            assert_eq!(form.get("grant_type").unwrap(), expected);
+        }
+        assert!(serde_json::from_value::<TokenGrant>(json!({
+            "grant_type": "refresh_token", "refresh_token": "synthetic", "url": "https://other.example"
+        })).is_err());
+    }
+}
+
 // Global state for OAuth callback server and deep link data
 lazy_static::lazy_static! {
     static ref OAUTH_SERVER: Arc<Mutex<Option<OAuthServer>>> = Arc::new(Mutex::new(None));
@@ -130,12 +194,7 @@ pub async fn start_oauth_server(port: u16) -> Result<(), String> {
                         state: query_pairs.get("state").cloned(),
                         error: query_pairs.get("error").cloned(),
                     };
-                    
-                    println!("OAuth callback received: code={}, state={}, error={}", 
-                        callback.code.as_deref().unwrap_or("None"),
-                        callback.state.as_deref().unwrap_or("None"),
-                        callback.error.as_deref().unwrap_or("None")
-                    );
+
                     
                     // Store the callback data
                     if let Ok(mut data) = callback_data_clone.lock() {
@@ -204,8 +263,8 @@ pub async fn get_oauth_callback() -> Result<Option<String>, String> {
                 "error": callback_data.error
             });
             let json_string = result.to_string();
-            println!("Deep link callback data retrieved (debug): {:?}", result);
-            println!("Deep link callback data retrieved (JSON string): {}", json_string);
+
+
             return Ok(Some(json_string));
         }
     }
@@ -223,8 +282,8 @@ pub async fn get_oauth_callback() -> Result<Option<String>, String> {
                     "error": callback_data.error
                 });
                 let json_string = result.to_string();
-                println!("OAuth callback data retrieved (debug): {:?}", result);
-                println!("OAuth callback data retrieved (JSON string): {}", json_string);
+
+
                 return Ok(Some(json_string));
             }
         }
@@ -252,7 +311,7 @@ pub async fn listen_oauth_callback() -> Result<(), String> {
 /// Handle deep link URL for OAuth callback
 #[tauri::command]
 pub async fn handle_deep_link(url: String) -> Result<(), String> {
-    println!("Deep link received: {}", url);
+
     
     if let Ok(parsed_url) = Url::parse(&url) {
         if parsed_url.scheme() == "whisperme" && parsed_url.path() == "/auth/callback" {
@@ -266,12 +325,7 @@ pub async fn handle_deep_link(url: String) -> Result<(), String> {
                 state: query_pairs.get("state").cloned(),
                 error: query_pairs.get("error").cloned(),
             };
-            
-            println!("Deep link OAuth callback: code={}, state={}, error={}", 
-                callback_data.code.as_deref().unwrap_or("None"),
-                callback_data.state.as_deref().unwrap_or("None"),
-                callback_data.error.as_deref().unwrap_or("None")
-            );
+
             
             // Store the callback data
             if let Ok(mut data) = DEEP_LINK_DATA.lock() {
@@ -287,7 +341,7 @@ pub async fn handle_deep_link(url: String) -> Result<(), String> {
 /// Handle deep link URL for OAuth callback (with app handle for events)
 #[tauri::command]
 pub async fn handle_deep_link_with_app(app: AppHandle, url: String) -> Result<(), String> {
-    println!("Deep link received: {}", url);
+
     
     // Emit event to frontend
     if let Err(e) = app.emit("deep-link", &url) {

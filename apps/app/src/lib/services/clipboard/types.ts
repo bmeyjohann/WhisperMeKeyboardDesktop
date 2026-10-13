@@ -2,8 +2,8 @@ import type { Result } from 'wellcrafted/result';
 import type { TaggedError } from 'wellcrafted/error';
 import type {
 	MaybePromise,
-	WhisperingError,
-	WhisperingWarning,
+	WhisperMeError,
+	WhisperMeWarning,
 } from '$lib/result';
 
 export type ClipboardServiceError = TaggedError<'ClipboardServiceError'>;
@@ -26,6 +26,6 @@ export type ClipboardService = {
 	writeTextToCursor: (
 		text: string,
 	) => MaybePromise<
-		Result<void, ClipboardServiceError | WhisperingWarning | WhisperingError>
+		Result<void, ClipboardServiceError | WhisperMeWarning | WhisperMeError>
 	>;
 };

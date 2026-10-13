@@ -1,10 +1,10 @@
 /**
- * URL and pathname constants for the Whispering application
+ * URL and pathname constants for the WhisperMe application
  */
 
 export const WHISPERING_URL =
 	process.env.NODE_ENV === 'production'
-		? 'https://whispering.bradenwong.com'
+		? 'https://whisperme.app'
 		: 'http://localhost:5173';
 
 export const WHISPERING_URL_WILDCARD = `${WHISPERING_URL}/*` as const;

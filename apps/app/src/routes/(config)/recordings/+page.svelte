@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { confirmationDialog } from '$lib/components/ConfirmationDialog.svelte';
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import { ClipboardIcon, TrashIcon } from '$lib/components/icons';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button, buttonVariants } from '$lib/components/ui/button/index.js';
@@ -210,13 +210,13 @@
 	];
 
 	let sorting = createPersistedState({
-		key: 'whispering-recordings-data-table-sorting',
+		key: 'whisperme-recordings-data-table-sorting',
 		onParseError: (error) => [{ id: 'timestamp', desc: true }],
 		schema: z.array(z.object({ desc: z.boolean(), id: z.string() })),
 	});
 	let columnFilters = $state<ColumnFiltersState>([]);
 	let columnVisibility = createPersistedState({
-		key: 'whispering-recordings-data-table-column-visibility',
+		key: 'whisperme-recordings-data-table-column-visibility',
 		onParseError: (error) => ({
 			ID: false,
 			Title: false,
@@ -227,7 +227,7 @@
 		schema: z.record(z.string(), z.boolean()),
 	});
 	let rowSelection = createPersistedState({
-		key: 'whispering-recordings-data-table-row-selection',
+		key: 'whisperme-recordings-data-table-row-selection',
 		onParseError: (error) => ({}),
 		schema: z.record(z.string(), z.boolean()),
 	});
@@ -334,6 +334,8 @@
 	});
 </script>
 
+<p class="px-4 py-2">Live voice sessions, transcripts, LLM results and errors are now in <a class="underline" href="/">Transcripts</a>. This page contains older audio recordings.</p>
+
 <svelte:head>
 	<title>All Recordings</title>
 </svelte:head>
@@ -356,7 +358,7 @@
 			/>
 			<div class="flex w-full items-center justify-between gap-2">
 				{#if selectedRecordingRows.length > 0}
-					<WhisperingButton
+					<WhisperMeButton
 						tooltipContent="Transcribe selected recordings"
 						variant="outline"
 						size="icon"
@@ -423,20 +425,20 @@
 						{:else}
 							<StartTranscriptionIcon class="size-4" />
 						{/if}
-					</WhisperingButton>
+					</WhisperMeButton>
 
 					<Dialog.Root
 						open={isDialogOpen}
 						onOpenChange={(v) => (isDialogOpen = v)}
 					>
 						<Dialog.Trigger>
-							<WhisperingButton
+							<WhisperMeButton
 								tooltipContent="Copy transcribed text from selected recordings"
 								variant="outline"
 								size="icon"
 							>
 								<ClipboardIcon class="size-4" />
-							</WhisperingButton>
+							</WhisperMeButton>
 						</Dialog.Trigger>
 						<Dialog.Content>
 							<Dialog.Header>
@@ -471,7 +473,7 @@
 								value={joinedTranscriptionsText}
 							/>
 							<Dialog.Footer>
-								<WhisperingButton
+								<WhisperMeButton
 									tooltipContent="Copy transcriptions"
 									onclick={() => {
 										copyToClipboard.mutate(
@@ -498,12 +500,12 @@
 									type="submit"
 								>
 									Copy Transcriptions
-								</WhisperingButton>
+								</WhisperMeButton>
 							</Dialog.Footer>
 						</Dialog.Content>
 					</Dialog.Root>
 
-					<WhisperingButton
+					<WhisperMeButton
 						tooltipContent="Delete selected recordings"
 						variant="outline"
 						size="icon"
@@ -537,7 +539,7 @@
 						}}
 					>
 						<TrashIcon class="size-4" />
-					</WhisperingButton>
+					</WhisperMeButton>
 				{/if}
 
 				<DropdownMenu.Root>

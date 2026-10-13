@@ -9,7 +9,7 @@
 	import { toast } from '$lib/toast';
 	import { getDefaultSettings } from '$lib/settings';
 
-	let { type }: { type: 'local' | 'global' } = $props();
+	let { type, basic = false }: { type: 'local' | 'global'; basic?: boolean } = $props();
 
 	let searchQuery = $state('');
 
@@ -17,6 +17,7 @@
 
 	const filteredCommands = $derived(
 		commands.filter((command) =>
+            (!basic || ['toggleManualRecording', 'cancelManualRecording'].includes(command.id)) &&
 			command.title.toLowerCase().includes(searchQuery.toLowerCase()),
 		),
 	);
@@ -32,6 +33,7 @@
 </script>
 
 <div class="space-y-4">
+	{#if !basic}
 	<!-- Search input -->
 	<div class="relative">
 		<Search
@@ -45,6 +47,7 @@
 		/>
 	</div>
 
+	{/if}
 	<!-- Command list with shortcuts -->
 	<div class="overflow-x-auto rounded-lg border">
 		<Table.Root>
@@ -60,7 +63,7 @@
 						defaultSettings[`shortcuts.${type}.${command.id}`]}
 					<Table.Row>
 						<Table.Cell class="font-medium">
-							<span class="block truncate pr-2">{command.title}</span>
+							<span class="block truncate pr-2">{basic ? (command.id === 'toggleManualRecording' ? 'Start / finish recording' : 'Cancel recording') : command.title}</span>
 						</Table.Cell>
 						<Table.Cell class="text-right">
 							{#if type === 'local'}

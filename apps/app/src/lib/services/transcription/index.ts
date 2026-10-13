@@ -4,12 +4,14 @@ import { OpenaiTranscriptionServiceLive } from './openai';
 import { SpeachesTranscriptionServiceLive } from './speaches';
 import { createWhisperMeTranscriptionService } from './whisperme';
 
+const WhisperMeTranscriptionServiceLive = createWhisperMeTranscriptionService();
+
 export {
 	ElevenlabsTranscriptionServiceLive as elevenlabs,
 	GroqTranscriptionServiceLive as groq,
 	OpenaiTranscriptionServiceLive as openai,
 	SpeachesTranscriptionServiceLive as speaches,
-	createWhisperMeTranscriptionService() as whisperme,
+	WhisperMeTranscriptionServiceLive as whisperme,
 };
 
 export type { ElevenLabsTranscriptionService } from './elevenlabs';

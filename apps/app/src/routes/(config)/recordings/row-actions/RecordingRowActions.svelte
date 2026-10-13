@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { confirmationDialog } from '$lib/components/ConfirmationDialog.svelte';
 	import TransformationPicker from './TransformationPicker.svelte';
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
-	import WhisperingTooltip from '$lib/components/WhisperingTooltip.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
+	import WhisperMeTooltip from '$lib/components/WhisperMeTooltip.svelte';
 	import CopyToClipboardButton from '$lib/components/copyable/CopyToClipboardButton.svelte';
 	import { TrashIcon, ClipboardIcon } from '$lib/components/icons';
 	import { Skeleton } from '$lib/components/ui/skeleton';
@@ -67,7 +67,7 @@
 		<Skeleton class="size-8" />
 		<Skeleton class="size-8" />
 	{:else}
-		<WhisperingButton
+		<WhisperMeButton
 			tooltipContent={recording.transcriptionStatus === 'UNPROCESSED'
 				? 'Start transcribing this recording'
 				: recording.transcriptionStatus === 'TRANSCRIBING'
@@ -84,7 +84,7 @@
 				});
 				transcribeRecording.mutate(recording, {
 					onError: (error) => {
-						if (error.name === 'WhisperingError') {
+						if (error.name === 'WhisperMeError') {
 							toast.error({ id: toastId, ...error });
 							return;
 						}
@@ -114,7 +114,7 @@
 			{:else if recording.transcriptionStatus === 'FAILED'}
 				<AlertCircleIcon class="size-4 text-red-500" />
 			{/if}
-		</WhisperingButton>
+		</WhisperMeButton>
 
 		<TransformationPicker
 			onSelect={(transformation) => {
@@ -170,7 +170,7 @@
 		{#if latestTransformationRunByRecordingIdQuery.isPending}
 			<Loader2Icon class="size-4 animate-spin" />
 		{:else if latestTransformationRunByRecordingIdQuery.isError}
-			<WhisperingTooltip
+			<WhisperMeTooltip
 				id={getRecordingTransitionId({
 					recordingId,
 					propertyName: 'latestTransformationRunOutput',
@@ -183,7 +183,7 @@
 						{@render tooltip()}
 					</span>
 				{/snippet}
-			</WhisperingTooltip>
+			</WhisperMeTooltip>
 		{:else}
 			<CopyToClipboardButton
 				contentDescription="latest transformation run output"
@@ -202,12 +202,12 @@
 
 		<ViewTransformationRunsDialog {recordingId} />
 
-		<WhisperingButton
+		<WhisperMeButton
 			tooltipContent="Download recording"
 			onclick={() =>
 				downloadRecording.mutate(recording, {
 					onError: (error) => {
-						if (error.name === 'WhisperingError') {
+						if (error.name === 'WhisperMeError') {
 							toast.error(error);
 							return;
 						}
@@ -232,9 +232,9 @@
 			{:else}
 				<DownloadIcon class="size-4" />
 			{/if}
-		</WhisperingButton>
+		</WhisperMeButton>
 
-		<WhisperingButton
+		<WhisperMeButton
 			tooltipContent="Delete recording"
 			onclick={() => {
 				confirmationDialog.open({
@@ -263,6 +263,6 @@
 			size="icon"
 		>
 			<TrashIcon class="size-4" />
-		</WhisperingButton>
+		</WhisperMeButton>
 	{/if}
 </div>

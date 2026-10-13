@@ -1,6 +1,6 @@
 import { Err, Ok, tryAsync, trySync } from 'wellcrafted/result';
 import type { VadState } from '$lib/constants/audio';
-import { WhisperingError } from '$lib/result';
+import { WhisperMeError } from '$lib/result';
 import { MicVAD, utils } from '@ricky0123/vad-web';
 import {
 	getRecordingStream,
@@ -30,7 +30,7 @@ export function createVadService() {
 			// Always start fresh - no reuse
 			if (maybeVad) {
 				return Err(
-					WhisperingError({
+					WhisperMeError({
 						title: 'VAD already active',
 						description: 'Stop the current session before starting a new one.',
 					})
@@ -44,7 +44,7 @@ export function createVadService() {
 			);
 			if (streamError) {
 				return Err(
-					WhisperingError({
+					WhisperMeError({
 						title: '❌ Failed to access microphone',
 						description: streamError.message,
 					})
@@ -76,7 +76,7 @@ export function createVadService() {
 						model: 'v5',
 					}),
 				mapError: (error) => ({
-					name: 'WhisperingError',
+					name: 'WhisperMeError',
 					title: '❌ Failed to start voice activated capture',
 					description: 'Your voice activated capture could not be started.',
 				}),
@@ -95,7 +95,7 @@ export function createVadService() {
 			const { error: startError } = trySync({
 				try: () => newVad.start(),
 				mapError: (error) =>
-					WhisperingError({
+					WhisperMeError({
 						title: 'Failed to start Voice Activity Detector',
 						description:
 							error instanceof Error
@@ -126,7 +126,7 @@ export function createVadService() {
 			const { error: destroyError } = trySync({
 				try: () => vad.destroy(),
 				mapError: (error) =>
-					WhisperingError({
+					WhisperMeError({
 						title: 'Failed to stop Voice Activity Detector',
 						description:
 							error instanceof Error ? error.message : 'Failed to stop VAD',

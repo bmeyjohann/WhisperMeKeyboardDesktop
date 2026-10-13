@@ -25,6 +25,10 @@ export async function deliverTranscribedText({
 	text: string;
 	toastId: string;
 }) {
+	if (!text) {
+		toast.success({id: toastId, title: 'Voice request completed', description: 'Review any suggested dictionary entry or writing rule in Voice settings.', action: {type: 'link', label: 'Review drafts', goto: '/settings/transcription'}});
+		return;
+	}
 	const userWantsClipboardCopy =
 		settings.value['transcription.clipboard.copyOnSuccess'];
 	const userWantsCursorPaste =

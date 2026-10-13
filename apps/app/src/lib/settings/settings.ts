@@ -32,13 +32,18 @@
 import type { Command } from '$lib/commands';
 import {
 	BITRATE_VALUES_KBPS,
+	DEV_RECORDING_INPUT_MODES,
 	DEFAULT_BITRATE_KBPS,
 	RECORDING_MODES,
 } from '$lib/constants/audio';
-import { TRANSCRIPTION_SERVICE_IDS } from '$lib/constants/transcription';
+import {
+	TRANSCRIPTION_SERVICE_IDS,
+	VOICE_INPUT_LLM_PROVIDER_VALUES,
+	VOICE_INPUT_TRANSCRIPTION_PROVIDER_VALUES,
+} from '$lib/constants/transcription';
 import { SUPPORTED_LANGUAGES } from '$lib/constants/languages';
 import { ALWAYS_ON_TOP_VALUES } from '$lib/constants/ui';
-import type { WhisperingSoundNames } from '$lib/constants/sounds';
+import type { WhisperMeSoundNames } from '$lib/constants/sounds';
 import type {
 	ElevenLabsModel,
 	GroqModel,
@@ -87,7 +92,7 @@ export const settingsSchema = z.object({
 		'sound.playOn.transcriptionComplete': z.boolean().default(true),
 		'sound.playOn.transformationComplete': z.boolean().default(true),
 	} satisfies Record<
-		`sound.playOn.${WhisperingSoundNames | 'cpal-start' | 'cpal-stop' | 'cpal-cancel'}`,
+		`sound.playOn.${WhisperMeSoundNames | 'cpal-start' | 'cpal-stop' | 'cpal-cancel'}`,
 		z.ZodDefault<ZodBoolean>
 	>),
 
@@ -119,10 +124,50 @@ export const settingsSchema = z.object({
 
 	// CPAL mode settings (native only)
 	'recording.cpal.selectedDeviceId': z.string().nullable().default(null),
+	'dev.recording.inputMode': z
+		.enum(DEV_RECORDING_INPUT_MODES)
+		.default('microphone'),
+	'dev.recording.sampleAudioUrl': z.string().default('/dev-sample.wav'),
 
 	'transcription.selectedTranscriptionService': z
 		.enum(TRANSCRIPTION_SERVICE_IDS)
-		.default('Groq'),
+		.default('WhisperMe'),
+	'voiceInput.transcriptionProvider': z
+		.enum(VOICE_INPUT_TRANSCRIPTION_PROVIDER_VALUES)
+		.default('muse_realtime'),
+	'voiceInput.llmProvider': z
+		.enum(VOICE_INPUT_LLM_PROVIDER_VALUES)
+		.default('groq_kimi_k2'),
+	'voiceInput.llmRouting': z.enum(['server', 'explicit']).default('server'),
+	'voiceInput.reasoningEffort': z.enum(['default', 'none', 'low', 'medium', 'high']).default('default'),
+	'voiceInput.llmModel': z.string().default(''),
+	'voiceInput.transcriptionModel': z.string().default(''),
+	'voiceInput.endpoint': z.string().default('wss://process-voice.whisperme.app/realtime'),
+	'voiceInput.mode': z.enum(['auto', 'verbatim', 'clean', 'command']).default('auto'),
+	'voiceInput.liveHints': z.boolean().default(false),
+	'voiceInput.usePreferences': z.boolean().default(false),
+	'voiceInput.useDictionary': z.boolean().default(false),
+	'voiceInput.dictionary': z.array(z.string().min(1).max(80)).max(100).default([]),
+	'voiceInput.suggestPreferences': z.boolean().default(false),
+	'voiceInput.lastAppIdentifier': z.string().max(500).default(''),
+	'voiceInput.preferenceDrafts': z.array(z.object({
+		kind: z.enum(['preference', 'dictionary']).default('preference'),
+		id: z.string(), ruleText: z.string().max(2000), name: z.string().max(100).optional(),
+		requiresConfirmation: z.boolean().optional(), scopeLocked: z.boolean().optional(),
+		scope: z.enum(['all', 'app', 'category']), appIdentifier: z.string().max(500).optional(),
+		categoryId: z.enum(['personal', 'business', 'development', 'writing', 'productivity', 'education', 'other']).optional(),
+		scopeReason: z.string().max(1000).optional(),
+	})).max(20).default([]),
+	'voiceInput.diagnosticContext': z.boolean().default(false),
+	'voiceInput.styleProfiles': z.array(z.object({
+		id: z.string(), name: z.string().max(80),
+		scope: z.enum(['all', 'app', 'category']), target: z.string().max(500),
+		instructions: z.string().max(2000),
+	})).max(100).default([]),
+	'voiceInput.appCategories': z.array(z.object({
+		app: z.string().max(500), category: z.string().max(80),
+	})).max(100).default([]),
+	'overlay.enabled': z.boolean().default(true),
 	// Shared settings in transcription
 	'transcription.outputLanguage': z.enum(SUPPORTED_LANGUAGES).default('auto'),
 	'transcription.prompt': z.string().default(''),
@@ -158,14 +203,8 @@ export const settingsSchema = z.object({
 	'apiKeys.elevenlabs': z.string().default(''),
 
 	...({
-		'shortcuts.local.toggleManualRecording': z
-			.string()
-			.nullable()
-			.default(' '),
-		'shortcuts.local.cancelManualRecording': z
-			.string()
-			.nullable()
-			.default('c'),
+		'shortcuts.local.toggleManualRecording': z.string().nullable().default(' '),
+		'shortcuts.local.cancelManualRecording': z.string().nullable().default('c'),
 		'shortcuts.local.toggleCpalRecording': z.string().nullable().default(null),
 		'shortcuts.local.cancelCpalRecording': z.string().nullable().default(null),
 		'shortcuts.local.toggleVadRecording': z.string().nullable().default('v'),
@@ -179,7 +218,7 @@ export const settingsSchema = z.object({
 		'shortcuts.global.toggleManualRecording': z
 			.string()
 			.nullable()
-			.default(`${CommandOrControl}+Shift+;`),
+			.default('Control+Shift+Space'),
 		'shortcuts.global.cancelManualRecording': z
 			.string()
 			.nullable()
@@ -187,7 +226,10 @@ export const settingsSchema = z.object({
 		'shortcuts.global.toggleCpalRecording': z.string().nullable().default(null),
 		'shortcuts.global.cancelCpalRecording': z.string().nullable().default(null),
 		'shortcuts.global.toggleVadRecording': z.string().nullable().default(null),
-		'shortcuts.global.pushToTalk': z.string().nullable().default(`${CommandOrAlt}+Shift+D`),
+		'shortcuts.global.pushToTalk': z
+			.string()
+			.nullable()
+			.default(`${CommandOrAlt}+Shift+D`),
 	} satisfies Record<
 		`shortcuts.global.${Command['id']}`,
 		z.ZodDefault<z.ZodNullable<ZodString>>

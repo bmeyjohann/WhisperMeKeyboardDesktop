@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { confirmationDialog } from '$lib/components/ConfirmationDialog.svelte';
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import { PencilIcon as EditIcon } from '$lib/components/icons';
 	import { Editor } from '$lib/components/transformations-editor';
 	import { Button } from '$lib/components/ui/button';
@@ -94,7 +94,7 @@
 <Dialog.Root bind:open={isDialogOpen}>
 	<Dialog.Trigger>
 		{#snippet child({ props })}
-			<WhisperingButton
+			<WhisperMeButton
 				{...props}
 				tooltipContent="Edit transformation, test transformation, and view run history"
 				variant="ghost"
@@ -103,7 +103,7 @@
 				<EditIcon class="size-4" />
 				<PlayIcon class="size-4" />
 				<HistoryIcon class="size-4" />
-			</WhisperingButton>
+			</WhisperMeButton>
 		{/snippet}
 	</Dialog.Trigger>
 

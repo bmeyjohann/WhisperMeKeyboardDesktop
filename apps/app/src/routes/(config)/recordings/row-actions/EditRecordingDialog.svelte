@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { confirmationDialog } from '$lib/components/ConfirmationDialog.svelte';
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog';
 	import { Input } from '$lib/components/ui/input';
@@ -103,14 +103,14 @@
 <Dialog.Root bind:open={isDialogOpen}>
 	<Dialog.Trigger>
 		{#snippet child({ props })}
-			<WhisperingButton
+			<WhisperMeButton
 				tooltipContent="Edit recording"
 				variant="ghost"
 				size="icon"
 				{...props}
 			>
 				<EditIcon class="size-4" />
-			</WhisperingButton>
+			</WhisperMeButton>
 		{/snippet}
 	</Dialog.Trigger>
 	<Dialog.Content

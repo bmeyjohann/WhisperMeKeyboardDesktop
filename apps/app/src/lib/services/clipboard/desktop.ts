@@ -1,4 +1,4 @@
-import type { WhisperingWarning } from '$lib/result';
+import type { WhisperMeWarning } from '$lib/result';
 import { Err, Ok, type Result, tryAsync } from 'wellcrafted/result';
 import { invoke } from '@tauri-apps/api/core';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
@@ -64,11 +64,11 @@ export function createClipboardServiceDesktop(): ClipboardService {
 
 			if (!isAccessibilityEnabled) {
 				return Err({
-					name: 'WhisperingWarning',
+					name: 'WhisperMeWarning',
 					title:
 						'Please enable or re-enable accessibility to paste transcriptions!',
 					description:
-						'Accessibility must be enabled or re-enabled for Whispering after install or update. Follow the link below for instructions.',
+						'Accessibility must be enabled or re-enabled for WhisperMe after install or update. Follow the link below for instructions.',
 					action: {
 						type: 'link',
 						label: 'Open Directions',
@@ -76,7 +76,7 @@ export function createClipboardServiceDesktop(): ClipboardService {
 					},
 					context: { text, isAccessibilityEnabled },
 					cause: undefined,
-				} satisfies WhisperingWarning);
+				} satisfies WhisperMeWarning);
 			}
 
 			const { error: writeTextToCursorError } = await writeTextToCursor(text);

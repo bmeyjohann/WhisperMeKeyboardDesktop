@@ -34,7 +34,7 @@
 		id="recording-device"
 		label="Recording Device"
 		placeholder="Loading devices..."
-		items={[]}
+		items={[] as {value: string; label: string}[]}
 		selected=""
 		onSelectedChange={() => {}}
 		disabled

@@ -19,6 +19,66 @@ export type UpdateStatusMessageFn = (args: {
 	description: string;
 }) => void;
 
+function getBrowserAudioDiagnostics() {
+	return {
+		isSecureContext:
+			typeof window !== 'undefined' ? window.isSecureContext : false,
+		protocol: typeof location !== 'undefined' ? location.protocol : 'unknown',
+		hasMediaDevicesApi:
+			typeof navigator !== 'undefined' && !!navigator.mediaDevices,
+		hasGetUserMedia:
+			typeof navigator !== 'undefined' &&
+			typeof navigator.mediaDevices?.getUserMedia === 'function',
+	};
+}
+
+function getErrorDetails(error: unknown) {
+	if (error instanceof Error) {
+		return {
+			errorName: error.name,
+			errorMessage: error.message,
+		};
+	}
+	if (typeof error === 'string') {
+		return {
+			errorName: 'Error',
+			errorMessage: error,
+		};
+	}
+	return {
+		errorName: 'UnknownError',
+		errorMessage: String(error),
+	};
+}
+
+async function requestAudioStream(
+	audio: MediaTrackConstraints | true,
+): Promise<MediaStream> {
+	const mediaDevices = navigator.mediaDevices;
+	if (!mediaDevices || typeof mediaDevices.getUserMedia !== 'function') {
+		const diagnostics = getBrowserAudioDiagnostics();
+		throw new Error(
+			`MediaDevices API unavailable (secureContext=${diagnostics.isSecureContext}, protocol=${diagnostics.protocol})`,
+		);
+	}
+
+	return mediaDevices.getUserMedia({ audio });
+}
+
+async function requestAudioStreamWithFallback(): Promise<MediaStream> {
+	try {
+		return await requestAudioStream(
+			WHISPER_RECOMMENDED_MEDIA_TRACK_CONSTRAINTS,
+		);
+	} catch (error) {
+		const { errorName } = getErrorDetails(error);
+		if (errorName === 'OverconstrainedError' || errorName === 'NotFoundError') {
+			return requestAudioStream(true);
+		}
+		throw error;
+	}
+}
+
 export async function hasExistingAudioPermission(): Promise<boolean> {
 	try {
 		const permissions = await navigator.permissions.query({
@@ -27,9 +87,7 @@ export async function hasExistingAudioPermission(): Promise<boolean> {
 		return permissions.state === 'granted';
 	} catch {
 		try {
-			const stream = await navigator.mediaDevices.getUserMedia({
-				audio: WHISPER_RECOMMENDED_MEDIA_TRACK_CONSTRAINTS,
-			});
+			const stream = await requestAudioStreamWithFallback();
 			for (const track of stream.getTracks()) {
 				track.stop();
 			}
@@ -45,27 +103,41 @@ export async function enumerateRecordingDevices(): Promise<
 > {
 	const hasPermission = await hasExistingAudioPermission();
 	if (!hasPermission) {
-		// extension.openWhisperingTab({});
+		// extension.openWhisperMeTab({});
 	}
 	return tryAsync({
 		try: async () => {
-			const allAudioDevicesStream = await navigator.mediaDevices.getUserMedia({
-				audio: WHISPER_RECOMMENDED_MEDIA_TRACK_CONSTRAINTS,
-			});
 			const devices = await navigator.mediaDevices.enumerateDevices();
-			for (const track of allAudioDevicesStream.getTracks()) {
-				track.stop();
-			}
 			const audioInputDevices = devices.filter(
 				(device) => device.kind === 'audioinput',
 			);
-			return audioInputDevices;
+			const hasUsableDeviceIds = audioInputDevices.some(
+				(device) => device.deviceId.trim() !== '',
+			);
+			if (audioInputDevices.length > 0 && hasUsableDeviceIds) {
+				return audioInputDevices;
+			}
+
+			const allAudioDevicesStream = await requestAudioStreamWithFallback();
+			const devicesWithPermission =
+				await navigator.mediaDevices.enumerateDevices();
+			for (const track of allAudioDevicesStream.getTracks()) {
+				track.stop();
+			}
+			const audioInputDevicesWithPermission = devicesWithPermission.filter(
+				(device) => device.kind === 'audioinput',
+			);
+			return audioInputDevicesWithPermission;
 		},
 		mapError: (error) => ({
 			name: 'RecordingServiceError',
 			message:
-				'We need permission to see your microphones. Check your browser settings and try again.',
-			context: { permissionRequired: 'microphone' },
+				'Unable to access microphones. If another app is currently using your mic (exclusive mode), close it and try again.',
+			context: {
+				permissionRequired: 'microphone',
+				...getErrorDetails(error),
+				...getBrowserAudioDiagnostics(),
+			},
 			cause: error,
 		}),
 	});
@@ -74,15 +146,19 @@ export async function enumerateRecordingDevices(): Promise<
 export async function getStreamForDeviceId(recordingDeviceId: string) {
 	const hasPermission = await hasExistingAudioPermission();
 	if (!hasPermission) {
-		// extension.openWhisperingTab({});
+		// extension.openWhisperMeTab({});
 	}
 	return tryAsync({
 		try: async () => {
-			const stream = await navigator.mediaDevices.getUserMedia({
-				audio: {
-					...WHISPER_RECOMMENDED_MEDIA_TRACK_CONSTRAINTS,
-					deviceId: { exact: recordingDeviceId },
-				},
+			if (recordingDeviceId.trim() === '') {
+				// Browsers/WebViews can return placeholder devices with empty IDs
+				// before permission is granted. Request the default mic stream first.
+				return requestAudioStreamWithFallback();
+			}
+
+			const stream = await requestAudioStream({
+				...WHISPER_RECOMMENDED_MEDIA_TRACK_CONSTRAINTS,
+				deviceId: { exact: recordingDeviceId },
 			});
 			return stream;
 		},
@@ -93,6 +169,8 @@ export async function getStreamForDeviceId(recordingDeviceId: string) {
 			context: {
 				recordingDeviceId,
 				hasPermission,
+				...getErrorDetails(error),
+				...getBrowserAudioDiagnostics(),
 			},
 			cause: error,
 		}),
@@ -116,6 +194,15 @@ export async function getRecordingStream(
 			description:
 				"No worries! We'll find the best microphone for you automatically...",
 		});
+		try {
+			const stream = await requestAudioStreamWithFallback();
+			return Ok({
+				stream,
+				deviceOutcome: { outcome: 'success' },
+			});
+		} catch {
+			// Fall through and continue with device enumeration fallback logic.
+		}
 	} else {
 		sendStatus({
 			title: '🎯 Connecting Device',

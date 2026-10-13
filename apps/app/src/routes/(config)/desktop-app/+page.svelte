@@ -1,5 +1,5 @@
 <script lang="ts">
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import { ChromeWebStoreIcon } from '$lib/components/icons';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Card } from '$lib/components/ui/card/index.js';
@@ -7,17 +7,17 @@
 </script>
 
 <svelte:head>
-	<title>Download Desktop App - Whispering</title>
+	<title>Download Desktop App - WhisperMe</title>
 </svelte:head>
 
 <main class="flex flex-1 items-center justify-center p-4">
 	<section class="container max-w-4xl">
 		<div class="text-center space-y-4 mb-8">
 			<h1 class="scroll-m-20 text-4xl font-bold tracking-tight lg:text-5xl">
-				Whispering Desktop
+				WhisperMe Desktop
 			</h1>
 			<p class="text-muted-foreground text-lg lg:text-xl max-w-2xl mx-auto">
-				Experience the full power of Whispering with native performance and
+				Experience the full power of WhisperMe with native performance and
 				system-wide integration.
 			</p>
 		</div>
@@ -58,9 +58,9 @@
 
 		<div class="flex flex-col items-center gap-4">
 			<div class="flex flex-col gap-3 sm:flex-row">
-				<WhisperingButton
-					tooltipContent="Download Whispering Desktop App"
-					href="https://github.com/braden-w/whispering/releases"
+				<WhisperMeButton
+					tooltipContent="Download WhisperMe Desktop App"
+					href="https://github.com/whisperme/desktop-app/releases"
 					target="_blank"
 					rel="noopener noreferrer"
 					variant="default"
@@ -69,10 +69,10 @@
 				>
 					<DownloadIcon class="mr-2 size-5" />
 					Download for Desktop
-				</WhisperingButton>
-				<WhisperingButton
+				</WhisperMeButton>
+				<WhisperMeButton
 					tooltipContent="Get the Chrome Extension"
-					href="https://chromewebstore.google.com/detail/whispering/oilbfihknpdbpfkcncojikmooipnlglo"
+					href="https://chromewebstore.google.com/detail/whisperme/oilbfihknpdbpfkcncojikmooipnlglo"
 					target="_blank"
 					rel="noopener noreferrer"
 					variant="outline"
@@ -80,7 +80,7 @@
 				>
 					<ChromeWebStoreIcon class="mr-2 size-5" />
 					Chrome Extension
-				</WhisperingButton>
+				</WhisperMeButton>
 			</div>
 
 			<Button onclick={() => window.history.back()} variant="link" class="mt-2">

@@ -1,11 +1,11 @@
 import type { Result } from 'wellcrafted/result';
 import type { TaggedError } from 'wellcrafted/error';
-import type { WhisperingSoundNames } from '$lib/constants/sounds';
+import type { WhisperMeSoundNames } from '$lib/constants/sounds';
 
 export type PlaySoundServiceError = TaggedError<'PlaySoundServiceError'>;
 
 export type PlaySoundService = {
 	playSound: (
-		soundName: WhisperingSoundNames,
+		soundName: WhisperMeSoundNames,
 	) => Promise<Result<void, PlaySoundServiceError>>;
 };

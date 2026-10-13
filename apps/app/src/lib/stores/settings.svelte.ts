@@ -8,7 +8,7 @@ import { toast } from '$lib/toast';
 import { createPersistedState } from '$lib/utils/createPersistedState.svelte';
 
 export const settings = createPersistedState({
-	key: 'whispering-settings',
+	key: 'whisperme-settings',
 	schema: settingsSchema,
 	onParseError: (error) => {
 		// For empty storage, return defaults

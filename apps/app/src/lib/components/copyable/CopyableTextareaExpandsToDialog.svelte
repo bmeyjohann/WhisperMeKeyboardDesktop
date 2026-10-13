@@ -6,7 +6,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { rpc } from '$lib/query';
 	import { mergeProps } from 'bits-ui';
-	import WhisperingTooltip from '../WhisperingTooltip.svelte';
+	import WhisperMeTooltip from '../WhisperMeTooltip.svelte';
 	import { createMutation } from '@tanstack/svelte-query';
 	import { toast } from '$lib/toast';
 
@@ -61,7 +61,7 @@
 <Dialog.Root bind:open={isDialogOpen}>
 	<Dialog.Trigger {id}>
 		{#snippet child({ props: dialogTriggerProps })}
-			<WhisperingTooltip {id} tooltipContent="View {label}">
+			<WhisperMeTooltip {id} tooltipContent="View {label}">
 				{#snippet trigger({ tooltipProps, tooltip })}
 					<Textarea
 						{...mergeProps(tooltipProps, dialogTriggerProps)}
@@ -75,7 +75,7 @@
 						{@render tooltip()}
 					</span>
 				{/snippet}
-			</WhisperingTooltip>
+			</WhisperMeTooltip>
 		{/snippet}
 	</Dialog.Trigger>
 	<Dialog.Content class="max-w-4xl">

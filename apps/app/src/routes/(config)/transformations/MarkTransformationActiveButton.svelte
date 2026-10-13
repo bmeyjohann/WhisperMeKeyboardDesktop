@@ -1,5 +1,5 @@
 <script lang="ts">
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import type { Transformation } from '$lib/services/db';
 	import { settings } from '$lib/stores/settings.svelte';
 	import { CheckCircleIcon, CircleIcon } from 'lucide-svelte';
@@ -26,7 +26,7 @@
 	);
 </script>
 
-<WhisperingButton
+<WhisperMeButton
 	tooltipContent={displayText}
 	variant="ghost"
 	{size}
@@ -53,4 +53,4 @@
 	{:else}
 		<CircleIcon class="size-4" />
 	{/if}
-</WhisperingButton>
+</WhisperMeButton>

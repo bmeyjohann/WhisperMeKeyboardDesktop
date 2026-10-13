@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { confirmationDialog } from '$lib/components/ConfirmationDialog.svelte';
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import { TrashIcon } from '$lib/components/icons';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { rpc } from '$lib/query';
@@ -28,7 +28,7 @@
 	{:else}
 		<EditTransformationDialog {transformation} />
 
-		<WhisperingButton
+		<WhisperMeButton
 			tooltipContent="Delete transformation"
 			onclick={() => {
 				confirmationDialog.open({
@@ -58,6 +58,6 @@
 			size="icon"
 		>
 			<TrashIcon class="size-4" />
-		</WhisperingButton>
+		</WhisperMeButton>
 	{/if}
 </div>

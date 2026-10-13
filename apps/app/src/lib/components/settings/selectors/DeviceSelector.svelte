@@ -1,5 +1,5 @@
 <script lang="ts">
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import * as Command from '$lib/components/ui/command';
 	import * as Popover from '$lib/components/ui/popover';
 	import { useCombobox } from '$lib/components/useCombobox.svelte';
@@ -53,7 +53,7 @@
 <Popover.Root bind:open={combobox.open}>
 	<Popover.Trigger bind:ref={combobox.triggerRef}>
 		{#snippet child({ props })}
-			<WhisperingButton
+			<WhisperMeButton
 				{...props}
 				tooltipContent={isDeviceSelected
 					? 'Change recording device'
@@ -68,7 +68,7 @@
 				{:else}
 					<MicIcon class="size-4 text-amber-500" />
 				{/if}
-			</WhisperingButton>
+			</WhisperMeButton>
 		{/snippet}
 	</Popover.Trigger>
 	<Popover.Content class="w-80 max-w-xl p-0">

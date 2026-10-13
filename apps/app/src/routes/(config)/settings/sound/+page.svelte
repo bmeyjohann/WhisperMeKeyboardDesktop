@@ -5,14 +5,14 @@
 </script>
 
 <svelte:head>
-	<title>Sound Settings - Whispering</title>
+	<title>Sound Settings - WhisperMe</title>
 </svelte:head>
 
 <div class="space-y-6">
 	<div>
 		<h3 class="text-lg font-medium">Sound</h3>
 		<p class="text-muted-foreground text-sm">
-			Configure your Whispering sound preferences.
+			Configure your WhisperMe sound preferences.
 		</p>
 	</div>
 

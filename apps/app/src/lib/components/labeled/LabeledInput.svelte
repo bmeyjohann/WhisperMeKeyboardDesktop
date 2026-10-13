@@ -15,7 +15,7 @@
 		hideLabel = false,
 		description,
 		...restProps
-	}: HTMLInputAttributes & {
+	}: Omit<HTMLInputAttributes, 'type' | 'files'> & {
 		label: string;
 		value: string;
 		type?: 'text' | 'password' | 'number';

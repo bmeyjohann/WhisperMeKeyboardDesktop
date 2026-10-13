@@ -27,7 +27,7 @@ export function createLocalShortcutManager() {
 		{
 			on: ShortcutTriggerState;
 			keyCombination: KeyboardEventSupportedKey[];
-			callback: () => void;
+			callback: (state?: 'Pressed' | 'Released') => void;
 		}
 	>();
 
@@ -108,9 +108,9 @@ export function createLocalShortcutManager() {
 					// Only trigger callback if shortcut not already active
 					// This is the key anti-spam mechanism: if the shortcut ID is already
 					// in activeShortcuts, we know it's been triggered and should not fire again
-					if (!activeShortcuts.has(id) && (on === 'Both' || on === 'Pressed')) {
-						activeShortcuts.add(id); // Mark as active BEFORE calling callback
-						callback();
+					if (!activeShortcuts.has(id)) {
+						activeShortcuts.add(id);
+                        if (on === 'Both' || on === 'Pressed') callback('Pressed');
 					}
 				}
 			});
@@ -121,41 +121,16 @@ export function createLocalShortcutManager() {
 			 * on the next key press.
 			 */
 			const keyup = on(window, 'keyup', (e) => {
-				// Skip shortcut processing if user is typing in an input field
-				if (isTypingInInput()) return;
-
-				const key = e.key.toLowerCase() as KeyboardEventPossibleKey;
-
-				// Ignore keys that are not supported
-				if (!isSupportedKey(key)) return;
-
-				/** Modifier keys that require special handling */
-				const modifierKeys = ['meta', 'control', 'alt', 'shift'];
-
-				if (modifierKeys.includes(key)) {
-					// Special handling for modifier keys (meta, control, alt, shift)
-					// This addresses issues with OS/browser intercepting certain key combinations
-					// where non-modifier keyup events might not fire properly
-					// When a modifier key is released, clear all non-modifier keys
-					// but keep other modifier keys that might still be pressed
-					// This prevents keys from getting "stuck" in the pressedKeys state
-					pressedKeys = pressedKeys.filter((k) => modifierKeys.includes(k));
-					activeShortcuts.clear();
-				}
-
-				// Check all registered shortcuts for matches on release BEFORE removing the key
-				for (const [
-					id,
-					{ callback, keyCombination, on },
-				] of shortcuts.entries()) {
-					if (!arraysMatch(pressedKeys, keyCombination)) continue;
-					if (activeShortcuts.has(id) && (on === 'Both' || on === 'Released')) {
-						e.preventDefault();
-						callback();
-						activeShortcuts.delete(id);
-					}
-				}
-
+                let key = e.key.toLowerCase() as KeyboardEventPossibleKey;
+                if (IS_MACOS && pressedKeys.includes('alt')) key = normalizeOptionKeyCharacter(key);
+                if (!isSupportedKey(key)) return;
+                // Release tracked shortcuts even if focus moved into an input or a modifier
+                // was released first. Each physical chord generates exactly one release.
+                for (const [id, {callback, keyCombination, on}] of shortcuts.entries()) {
+                    if (!activeShortcuts.has(id) || !keyCombination.includes(key)) continue;
+                    activeShortcuts.delete(id);
+                    if (on === 'Both' || on === 'Released') { e.preventDefault(); callback('Released'); }
+                }
 				// Regular key removal from pressed state
 				pressedKeys = pressedKeys.filter((k) => k !== key);
 
@@ -169,7 +144,12 @@ export function createLocalShortcutManager() {
 			 * Handle window blur events (switching applications, clicking outside browser)
 			 * Reset all keys when user shifts focus away from the window
 			 */
+			const releaseActive = () => {
+                for (const id of activeShortcuts) { const shortcut = shortcuts.get(id); if (shortcut && shortcut.on !== 'Pressed') shortcut.callback('Released'); }
+                activeShortcuts.clear();
+            };
 			const blur = on(window, 'blur', () => {
+                releaseActive();
 				pressedKeys = [];
 				activeShortcuts.clear();
 			});
@@ -180,6 +160,7 @@ export function createLocalShortcutManager() {
 			 */
 			const visibilityChange = on(document, 'visibilitychange', () => {
 				if (document.visibilityState === 'hidden') {
+                    releaseActive();
 					pressedKeys = [];
 					activeShortcuts.clear();
 				}
@@ -201,7 +182,7 @@ export function createLocalShortcutManager() {
 		}: {
 			id: CommandId;
 			keyCombination: KeyboardEventSupportedKey[];
-			callback: () => void;
+			callback: (state?: 'Pressed' | 'Released') => void;
 			on: ShortcutTriggerState;
 		}): Promise<Result<void, LocalShortcutServiceError>> {
 			shortcuts.set(id, { keyCombination, callback, on });

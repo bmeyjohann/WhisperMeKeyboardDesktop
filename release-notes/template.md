@@ -1,5 +1,5 @@
 <!-- SUMMARY:START -->
-## Whispering vX.X.X - [Brief Descriptive Title]
+## WhisperMe vX.X.X - [Brief Descriptive Title]
 
 Major highlights:
 • [Key new feature or improvement]
@@ -10,7 +10,7 @@ Major highlights:
 ⚠️ [Any breaking changes or important migration notes]
 <!-- SUMMARY:END -->
 
-# Whispering vX.X.X - [Full Release Title]
+# WhisperMe vX.X.X - [Full Release Title]
 
 ## 🚀 Release Highlights
 
@@ -84,4 +84,4 @@ Special thanks to:
 
 ---
 
-**Full changelog**: [Previous version...Current version](https://github.com/braden-w/whispering/compare/vX.X.X...vY.Y.Y)
+**Full changelog**: [Previous version...Current version](https://github.com/whisperme/desktop-app/compare/vX.X.X...vY.Y.Y)

@@ -13,7 +13,10 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"lint": "eslint --fix . && prettier --check .",
+		"test:voice": "node --test scripts/test-voice-session.mjs scripts/test-editor-window.mjs scripts/test-voice-pcm.mjs scripts/test-auth-refresh.mjs scripts/test-voice-subtitle.mjs scripts/test-voice-history.mjs scripts/test-style-profile.mjs scripts/test-voice-controls.mjs scripts/test-personalization.mjs",
+		"test:account": "node --test scripts/test-account.mjs",
+		"test": "pnpm test:voice && pnpm test:account",
+		"lint": "eslint . && prettier --check .",
 		"format": "prettier --write .",
 		"tauri": "tauri"
 	},

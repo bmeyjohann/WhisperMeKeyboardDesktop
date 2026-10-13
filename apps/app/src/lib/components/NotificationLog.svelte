@@ -38,14 +38,14 @@
 		LogsIcon,
 	} from 'lucide-svelte';
 	import { mode } from 'mode-watcher';
-	import WhisperingButton from './WhisperingButton.svelte';
+	import WhisperMeButton from './WhisperMeButton.svelte';
 	import { cn } from '$lib/utils.js';
 </script>
 
 <Popover.Root bind:open={notificationLog.isOpen}>
 	<Popover.Trigger>
 		{#snippet child({ props })}
-			<WhisperingButton
+			<WhisperMeButton
 				tooltipContent="Notification History"
 				class="fixed bottom-4 right-4 z-50 hidden xs:inline-flex"
 				variant="outline"
@@ -53,7 +53,7 @@
 				{...props}
 			>
 				<LogsIcon class="size-4" />
-			</WhisperingButton>
+			</WhisperMeButton>
 		{/snippet}
 	</Popover.Trigger>
 	<Popover.Content

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import { ChromeWebStoreIcon } from '$lib/components/icons';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { LaptopIcon as DesktopIcon } from 'lucide-svelte';
@@ -18,9 +18,9 @@
 			You can access global keyboard shortcuts on the extension and desktop app.
 		</p>
 		<div class="flex flex-col gap-2 md:flex-row">
-			<WhisperingButton
+			<WhisperMeButton
 				tooltipContent="Check out the Chrome Extension"
-				href="https://github.com/braden-w/whispering/releases"
+				href="https://github.com/whisperme/desktop-app/releases"
 				target="_blank"
 				rel="noopener noreferrer"
 				variant="default"
@@ -28,10 +28,10 @@
 			>
 				<DesktopIcon class="mr-2 size-6" />
 				Download for Desktop
-			</WhisperingButton>
-			<WhisperingButton
+			</WhisperMeButton>
+			<WhisperMeButton
 				tooltipContent="Check out the desktop app"
-				href="https://chromewebstore.google.com/detail/whispering/oilbfihknpdbpfkcncojikmooipnlglo"
+				href="https://chromewebstore.google.com/detail/whisperme/oilbfihknpdbpfkcncojikmooipnlglo"
 				target="_blank"
 				rel="noopener noreferrer"
 				variant="outline"
@@ -39,7 +39,7 @@
 			>
 				<ChromeWebStoreIcon class="mr-2 size-6" />
 				Get Chrome Extension
-			</WhisperingButton>
+			</WhisperMeButton>
 		</div>
 		<Button onclick={() => window.history.back()} variant="link">Go back</Button
 		>

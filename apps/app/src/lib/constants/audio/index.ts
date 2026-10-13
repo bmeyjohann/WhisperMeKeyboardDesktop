@@ -9,6 +9,11 @@ export {
 	RECORDING_MODE_OPTIONS,
 	type RecordingMode,
 } from './recording-modes';
+export {
+	DEV_RECORDING_INPUT_MODES,
+	DEV_RECORDING_INPUT_MODE_OPTIONS,
+	type DevRecordingInputMode,
+} from './dev-recording';
 
 export {
 	recordingStateSchema,
@@ -16,7 +21,7 @@ export {
 	cpalStateToIcons,
 	vadStateSchema,
 	vadStateToIcons,
-	type WhisperingRecordingState,
+	type WhisperMeRecordingState,
 	type CancelRecordingResult,
 	type VadState,
 } from './recording-states';

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { confirmationDialog } from '$lib/components/ConfirmationDialog.svelte';
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import { TrashIcon } from '$lib/components/icons';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -110,13 +110,13 @@
 	];
 
 	let sorting = createPersistedState({
-		key: 'whispering-transformations-data-table-sorting',
+		key: 'whisperme-transformations-data-table-sorting',
 		onParseError: (error) => [{ id: 'title', desc: false }],
 		schema: z.array(z.object({ desc: z.boolean(), id: z.string() })),
 	});
 	let columnFilters = $state<ColumnFiltersState>([]);
 	let rowSelection = createPersistedState({
-		key: 'whispering-transformations-data-table-row-selection',
+		key: 'whisperme-transformations-data-table-row-selection',
 		onParseError: (error) => ({}),
 		schema: z.record(z.string(), z.boolean()),
 	});
@@ -211,7 +211,7 @@
 			oninput={(e) => (filterQuery.value = e.currentTarget.value)}
 		/>
 		{#if selectedTransformationRows.length > 0}
-			<WhisperingButton
+			<WhisperMeButton
 				tooltipContent="Delete selected transformations"
 				variant="outline"
 				size="icon"
@@ -245,7 +245,7 @@
 				}}
 			>
 				<TrashIcon class="size-4" />
-			</WhisperingButton>
+			</WhisperMeButton>
 		{/if}
 
 		<CreateTransformationButton />

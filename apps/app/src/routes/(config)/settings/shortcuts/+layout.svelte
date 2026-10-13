@@ -22,7 +22,7 @@
 	<header>
 		<h1 class="text-3xl font-bold tracking-tight">Keyboard Shortcuts</h1>
 		<p class="mt-2 text-muted-foreground">
-			Configure keyboard shortcuts to quickly access Whispering features.
+			Configure keyboard shortcuts to quickly access WhisperMe features.
 		</p>
 	</header>
 

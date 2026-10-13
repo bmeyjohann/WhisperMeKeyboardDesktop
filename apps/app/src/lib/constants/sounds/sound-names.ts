@@ -2,7 +2,7 @@
  * Sound effect names used throughout the application
  */
 
-export type WhisperingSoundNames =
+export type WhisperMeSoundNames =
 	| 'manual-start'
 	| 'manual-stop'
 	| 'manual-cancel'

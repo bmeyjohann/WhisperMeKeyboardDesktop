@@ -9,7 +9,7 @@
 </script>
 
 <svelte:head>
-	<title>Global Shortcuts - Whispering</title>
+	<title>Global Shortcuts - WhisperMe</title>
 </svelte:head>
 
 {#if window.__TAURI_INTERNALS__}
@@ -25,7 +25,7 @@
 					<ShortcutFormatHelp type="global" />
 				</div>
 				<p class="text-sm text-muted-foreground">
-					Set system-wide keyboard shortcuts that work even when Whispering is
+					Set system-wide keyboard shortcuts that work even when WhisperMe is
 					not in focus. These shortcuts will trigger from anywhere on your
 					system.
 				</p>
@@ -57,7 +57,7 @@
 			<Layers2Icon class="mb-4 size-10 text-muted-foreground" />
 			<h3 class="mb-2 text-xl font-medium">Global Shortcuts</h3>
 			<p class="mb-6 max-w-md text-sm text-muted-foreground">
-				Global shortcuts allow you to use Whispering from any application on
+				Global shortcuts allow you to use WhisperMe from any application on
 				your computer. This feature is only available in the desktop app or
 				browser extension.
 			</p>

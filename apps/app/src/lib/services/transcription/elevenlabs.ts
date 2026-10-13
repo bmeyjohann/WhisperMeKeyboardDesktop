@@ -1,5 +1,5 @@
 import type { ElevenLabsModel } from '$lib/constants/transcription';
-import type { WhisperingError } from '$lib/result';
+import type { WhisperMeError } from '$lib/result';
 import type { Settings } from '$lib/settings';
 import { Err, Ok, type Result } from 'wellcrafted/result';
 import { ElevenLabsClient } from 'elevenlabs';
@@ -15,10 +15,10 @@ export function createElevenLabsTranscriptionService() {
 				apiKey: string;
 				modelName: (string & {}) | ElevenLabsModel['name'];
 			},
-		): Promise<Result<string, WhisperingError>> => {
+		): Promise<Result<string, WhisperMeError>> => {
 			if (!options.apiKey) {
 				return Err({
-					name: 'WhisperingError',
+					name: 'WhisperMeError',
 					title: '🔑 API Key Required',
 					description:
 						'Please enter your ElevenLabs API key in settings to use speech-to-text transcription.',
@@ -27,7 +27,7 @@ export function createElevenLabsTranscriptionService() {
 						label: 'Add API key',
 						goto: '/settings/transcription',
 					},
-				} satisfies WhisperingError);
+				} satisfies WhisperMeError);
 			}
 
 			try {
@@ -41,10 +41,10 @@ export function createElevenLabsTranscriptionService() {
 
 				if (blobSizeInMb > MAX_FILE_SIZE_MB) {
 					return Err({
-						name: 'WhisperingError',
+						name: 'WhisperMeError',
 						title: '📁 File Size Too Large',
 						description: `Your audio file (${blobSizeInMb.toFixed(1)}MB) exceeds the ${MAX_FILE_SIZE_MB}MB limit. Please use a smaller file or compress the audio.`,
-					} satisfies WhisperingError);
+					} satisfies WhisperMeError);
 				}
 
 				// Use the client's speechToText functionality
@@ -64,12 +64,12 @@ export function createElevenLabsTranscriptionService() {
 				return Ok(transcription.text.trim());
 			} catch (error) {
 				return Err({
-					name: 'WhisperingError',
+					name: 'WhisperMeError',
 					title: '🔧 Transcription Failed',
 					description:
 						'Unable to complete the transcription using ElevenLabs. This may be due to a service issue or unsupported audio format. Please try again.',
 					action: { type: 'more-details', error },
-				} satisfies WhisperingError);
+				} satisfies WhisperMeError);
 			}
 		},
 	};

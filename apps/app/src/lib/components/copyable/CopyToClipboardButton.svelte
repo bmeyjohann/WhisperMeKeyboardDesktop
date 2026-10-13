@@ -1,5 +1,5 @@
 <script lang="ts">
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import type { Props } from '$lib/components/ui/button';
 	import { rpc } from '$lib/query';
 	import { toast } from '$lib/toast';
@@ -46,7 +46,7 @@
 	let hasCopied = $state(false);
 </script>
 
-<WhisperingButton
+<WhisperMeButton
 	tooltipContent="Copy {contentDescription} to clipboard"
 	onclick={() =>
 		copyToClipboard.mutate(
@@ -89,4 +89,4 @@
 	{:else}
 		{@render children()}
 	{/if}
-</WhisperingButton>
+</WhisperMeButton>

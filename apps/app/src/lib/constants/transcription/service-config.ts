@@ -2,13 +2,8 @@
  * Transcription service configurations
  */
 import type { Settings } from '$lib/settings';
-import { CloudIcon, HexagonIcon, PauseIcon, ServerIcon } from 'lucide-svelte';
-import {
-	OPENAI_TRANSCRIPTION_MODELS,
-	GROQ_MODELS,
-	ELEVENLABS_TRANSCRIPTION_MODELS,
-	type TranscriptionModel,
-} from './models';
+import { CloudIcon } from 'lucide-svelte';
+import type { TranscriptionModel } from './models';
 
 export const TRANSCRIPTION_SERVICE_IDS = [
 	'OpenAI',
@@ -23,14 +18,14 @@ type TranscriptionServiceId = (typeof TRANSCRIPTION_SERVICE_IDS)[number];
 type BaseTranscriptionService = {
 	id: TranscriptionServiceId;
 	name: string;
-	icon: unknown;
+	icon: typeof CloudIcon;
 };
 
 type ApiTranscriptionService = BaseTranscriptionService & {
 	type: 'api';
 	models: readonly TranscriptionModel[];
 	defaultModel: TranscriptionModel;
-	modelSettingKey: string;
+	modelSettingKey: keyof Settings;
 	apiKeyField: keyof Settings;
 };
 
@@ -48,44 +43,44 @@ type SatisfiedTranscriptionService =
 	| ServerTranscriptionService
 	| AuthenticatedTranscriptionService;
 
-export const TRANSCRIPTION_SERVICES = [
-	{
-		id: 'Groq',
-		name: 'Groq Whisper',
-		icon: CloudIcon,
-		models: GROQ_MODELS,
-		defaultModel: GROQ_MODELS[2],
-		modelSettingKey: 'transcription.groq.model',
-		apiKeyField: 'apiKeys.groq',
-		type: 'api',
-	},
-	{
-		id: 'OpenAI',
-		name: 'OpenAI Whisper',
-		icon: HexagonIcon,
-		models: OPENAI_TRANSCRIPTION_MODELS,
-		defaultModel: OPENAI_TRANSCRIPTION_MODELS[0],
-		modelSettingKey: 'transcription.openai.model',
-		apiKeyField: 'apiKeys.openai',
-		type: 'api',
-	},
-	{
-		id: 'ElevenLabs',
-		name: 'ElevenLabs',
-		icon: PauseIcon,
-		models: ELEVENLABS_TRANSCRIPTION_MODELS,
-		defaultModel: ELEVENLABS_TRANSCRIPTION_MODELS[0],
-		modelSettingKey: 'transcription.elevenlabs.model',
-		apiKeyField: 'apiKeys.elevenlabs',
-		type: 'api',
-	},
-	{
-		id: 'speaches',
-		name: 'Speaches',
-		icon: ServerIcon,
-		serverUrlField: 'transcription.speaches.baseUrl',
-		type: 'server',
-	},
+export const TRANSCRIPTION_SERVICES: SatisfiedTranscriptionService[] = [
+	// {
+	// 	id: 'Groq',
+	// 	name: 'Groq Whisper',
+	// 	icon: CloudIcon,
+	// 	models: GROQ_MODELS,
+	// 	defaultModel: GROQ_MODELS[2],
+	// 	modelSettingKey: 'transcription.groq.model',
+	// 	apiKeyField: 'apiKeys.groq',
+	// 	type: 'api',
+	// },
+	// {
+	// 	id: 'OpenAI',
+	// 	name: 'OpenAI Whisper',
+	// 	icon: HexagonIcon,
+	// 	models: OPENAI_TRANSCRIPTION_MODELS,
+	// 	defaultModel: OPENAI_TRANSCRIPTION_MODELS[0],
+	// 	modelSettingKey: 'transcription.openai.model',
+	// 	apiKeyField: 'apiKeys.openai',
+	// 	type: 'api',
+	// },
+	// {
+	// 	id: 'ElevenLabs',
+	// 	name: 'ElevenLabs',
+	// 	icon: PauseIcon,
+	// 	models: ELEVENLABS_TRANSCRIPTION_MODELS,
+	// 	defaultModel: ELEVENLABS_TRANSCRIPTION_MODELS[0],
+	// 	modelSettingKey: 'transcription.elevenlabs.model',
+	// 	apiKeyField: 'apiKeys.elevenlabs',
+	// 	type: 'api',
+	// },
+	// {
+	// 	id: 'speaches',
+	// 	name: 'Speaches',
+	// 	icon: ServerIcon,
+	// 	serverUrlField: 'transcription.speaches.baseUrl',
+	// 	type: 'server',
+	// },
 	{
 		id: 'WhisperMe',
 		name: 'WhisperMe (Authenticated)',
@@ -101,4 +96,4 @@ export const TRANSCRIPTION_SERVICE_OPTIONS = TRANSCRIPTION_SERVICES.map(
 	}),
 );
 
-export type TranscriptionService = (typeof TRANSCRIPTION_SERVICES)[number];
+export type TranscriptionService = SatisfiedTranscriptionService;

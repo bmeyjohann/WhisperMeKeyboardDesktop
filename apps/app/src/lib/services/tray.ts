@@ -1,6 +1,6 @@
 import { goto } from '$app/navigation';
 // import { extension } from '@repo/extension';
-import type { WhisperingRecordingState } from '$lib/constants/audio';
+import type { WhisperMeRecordingState } from '$lib/constants/audio';
 // import { commandCallbacks } from '$lib/commands';
 import { type Err, Ok, tryAsync } from 'wellcrafted/result';
 import type { TaggedError } from 'wellcrafted/error';
@@ -10,20 +10,20 @@ import { TrayIcon } from '@tauri-apps/api/tray';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { exit } from '@tauri-apps/plugin-process';
 
-const TRAY_ID = 'whispering-tray';
+const TRAY_ID = 'whisperme-tray';
 
 export type SetTrayIconServiceErrorProperties =
 	TaggedError<'SetTrayIconServiceError'>;
 
 type SetTrayIconService = {
 	setTrayIcon: (
-		icon: WhisperingRecordingState,
+		icon: WhisperMeRecordingState,
 	) => Promise<Ok<void> | Err<SetTrayIconServiceErrorProperties>>;
 };
 
 export function createTrayIconWebService(): SetTrayIconService {
 	return {
-		setTrayIcon: async (icon: WhisperingRecordingState) => {
+		setTrayIcon: async (icon: WhisperMeRecordingState) => {
 			// const { error: setRecorderStateError } = await extension.setRecorderState(
 			// 	{ recorderState: icon },
 			// );
@@ -42,7 +42,7 @@ export function createTrayIconWebService(): SetTrayIconService {
 export function createTrayIconDesktopService(): SetTrayIconService {
 	const trayPromise = initTray();
 	return {
-		setTrayIcon: (recorderState: WhisperingRecordingState) =>
+		setTrayIcon: (recorderState: WhisperMeRecordingState) =>
 			tryAsync({
 				try: async () => {
 					const iconPath = await getIconPath(recorderState);
@@ -118,11 +118,11 @@ async function initTray() {
 	return tray;
 }
 
-async function getIconPath(recorderState: WhisperingRecordingState) {
+async function getIconPath(recorderState: WhisperMeRecordingState) {
 	const iconPaths = {
 		IDLE: 'recorder-state-icons/studio_microphone.png',
 		RECORDING: 'recorder-state-icons/red_large_square.png',
-	} as const satisfies Record<WhisperingRecordingState, string>;
+	} as const satisfies Record<WhisperMeRecordingState, string>;
 	return await resolveResource(iconPaths[recorderState]);
 }
 

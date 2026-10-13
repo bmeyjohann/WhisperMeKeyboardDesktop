@@ -1,4 +1,4 @@
-import type { KeyboardEventSupportedKey } from '$lib/constants/keyboard';
+import { isSupportedKey, type KeyboardEventSupportedKey } from '$lib/constants/keyboard';
 import type { PressedKeys } from '$lib/utils/createPressedKeys.svelte';
 
 const CAPTURE_WINDOW_MS = 300; // Time to wait for additional keys in a combination
@@ -71,7 +71,7 @@ export function createKeyRecorder({
 		// Track new keys
 		let hasNewKeys = false;
 		for (const key of pressedKeys.current) {
-			if (!capturedKeys.has(key)) {
+			if (isSupportedKey(key) && !capturedKeys.has(key)) {
 				capturedKeys.add(key);
 				hasNewKeys = true;
 			}

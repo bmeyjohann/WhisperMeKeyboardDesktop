@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>WhisperMe owned WebView2 test editor</title>
+<style>body{font:18px 'Segoe UI',sans-serif;margin:24px;background:white;color:#111}textarea,input,[contenteditable]{display:block;box-sizing:border-box;width:100%;padding:12px;border:1px solid #888;margin:8px 0 24px;font:inherit}textarea{height:100px}[contenteditable]{min-height:80px}</style>
+<body>
+<p>Owned integration fixture. No microphone, account access or network requests.</p>
+<label for="smoke-textarea">Multiline textarea</label>
+<textarea id="smoke-textarea">Original WebView textarea</textarea>
+<label id="rich-label">Rich editable field</label>
+<div id="smoke-rich" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="rich-label">Original rich editor</div>
+<label for="smoke-single">Single-line input</label>
+<input id="smoke-single" value="Original single line">
+<style>.placeholder-rich:empty::before{content:attr(data-placeholder);color:#777;pointer-events:none;float:left;height:0}</style>
+<label for="smoke-placeholder-input">Empty input with placeholder</label>
+<input id="smoke-placeholder-input" placeholder="Do anything">
+<label id="placeholder-rich-label">Empty rich editor with generated placeholder</label>
+<div id="smoke-placeholder-rich" class="placeholder-rich" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="placeholder-rich-label" data-placeholder="Do anything"></div>
+<label id="placeholder-literal-label">Actual text matching the placeholder</label>
+<div id="smoke-placeholder-literal" class="placeholder-rich" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="placeholder-literal-label" data-placeholder="Do anything">Do anything</div>
+<label id="format-rich-label">Rich field with unchanged bold and link</label>
+<div id="smoke-format-rich" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="format-rich-label"><strong>Bold prefix </strong>editable middle<a href="https://example.invalid/fixture"> linked suffix</a></div>
+</body>
+</html>

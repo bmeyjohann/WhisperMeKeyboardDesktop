@@ -1,4 +1,7 @@
 <script lang="ts">
+ import AppNavigation from '$lib/components/AppNavigation.svelte';
+ import { page } from '$app/state';
+ import { usesRealtimeVoice, toggleRealtimeVoice, isVoiceSessionActive } from '$lib/services/realtime-voice';
 	import { goto } from '$app/navigation';
 	import { commandCallbacks } from '$lib/commands';
 	import ConfirmationDialog from '$lib/components/ConfirmationDialog.svelte';
@@ -12,6 +15,7 @@
 	import { ModeWatcher, mode } from 'mode-watcher';
 	import { onMount } from 'svelte';
 	import { Toaster, type ToasterProps } from 'svelte-sonner';
+	import { listen } from '@tauri-apps/api/event';
 	import { syncWindowAlwaysOnTopWithRecorderState } from './alwaysOnTop.svelte';
 	import { closeToTrayIfEnabled } from './closeToTrayIfEnabled';
 	import { checkForUpdates } from './check-for-updates';
@@ -24,15 +28,27 @@
 	import { registerOnboarding } from './register-onboarding';
 	import { syncIconWithRecorderState } from './syncIconWithRecorderState.svelte';
 	import { settings } from '$lib/stores/settings.svelte';
-	import { auth0Service, isAuthenticated, authUser, isAuthLoading } from '$lib/services/auth0';
+	import { auth0Service, isAuthenticated, authUser, isAuthLoading, authError } from '$lib/services/auth0';
 	import LoginScreen from '$lib/components/LoginScreen.svelte';
 
+    const localTest = auth0Service.localTest;
+	const sessionChecking = auth0Service.sessionChecking;
+ let startupChecked = $state(false);
 	const getRecorderStateQuery = createQuery(
 		rpc.manualRecorder.getRecorderState.options,
 	);
+	const getCpalStateQuery = createQuery(rpc.cpalRecorder.getRecorderState.options);
 	const getVadStateQuery = createQuery(rpc.vadRecorder.getVadState.options);
 
 	onMount(() => {
+		const checkSession = () => {
+			if (!isVoiceSessionActive() && getRecorderStateQuery.data !== 'RECORDING' &&
+				getCpalStateQuery.data !== 'RECORDING') void auth0Service.checkSession().finally(() => { startupChecked = true; });
+		};
+		checkSession();
+		window.addEventListener('focus', checkSession);
+		window.addEventListener('online', checkSession);
+		const sessionTimer = window.setInterval(checkSession, 60_000);
 		window.commands = commandCallbacks;
 		window.goto = goto;
 		syncLocalShortcutsWithSettings();
@@ -43,9 +59,36 @@
 			resetGlobalShortcutsToDefaultIfDuplicates();
 			checkForUpdates();
 		} else {
-			// const _notifyWhisperingTabReadyResult =
-			// await extension.notifyWhisperingTabReady(undefined);
+			// const _notifyWhisperMeTabReadyResult =
+			// await extension.notifyWhisperMeTabReady(undefined);
 		}
+
+		let overlayUnlisten: (() => void) | undefined;
+		if (window.__TAURI_INTERNALS__) {
+			listen('stop-recording-requested', async () => {
+ if (usesRealtimeVoice()) return toggleRealtimeVoice();
+				console.info('Stop recording requested from overlay');
+
+				const currentState = getRecorderStateQuery.data;
+				if (currentState === 'RECORDING') {
+					await commandCallbacks.toggleManualRecording();
+				}
+
+				const cpalState = getCpalStateQuery.data;
+				if (cpalState === 'RECORDING') {
+					await commandCallbacks.toggleCpalRecording();
+				}
+			}).then((unlisten) => {
+				overlayUnlisten = unlisten;
+			});
+		}
+
+		return () => {
+			window.removeEventListener('focus', checkSession);
+			window.removeEventListener('online', checkSession);
+			window.clearInterval(sessionTimer);
+			overlayUnlisten?.();
+		};
 	});
 
 
@@ -84,10 +127,16 @@
 	let { children } = $props();
 </script>
 
+{#if $localTest}<div role="status" class="bg-blue-100 p-2 text-center text-sm text-blue-950">Local test · loopback server · account services disabled</div>{/if}
+
 <!-- Show login screen if not authenticated -->
-{#if !$isAuthenticated}
+{#if $sessionChecking && !$isAuthenticated && !startupChecked}
+	<p role="status" class="p-6">Checking your session…</p>
+{:else if !$isAuthenticated && !['/', '/settings', '/settings/transcription'].includes(page.url.pathname)}
 	<LoginScreen />
+    <a class="text-sm underline" href="/settings/transcription">Voice settings</a>
 {:else}
+	{#if $authError && $isAuthenticated}<div role="alert" class="p-3">{$authError} <button class="underline" onclick={() => auth0Service.checkSession()}>Retry session check</button></div>{/if}
 	<!-- Main app content for authenticated users -->
 	<button
 		class="xxs:hidden hover:bg-accent hover:text-accent-foreground h-screen w-screen transform duration-300 ease-in-out"
@@ -105,7 +154,9 @@
 		</span>
 	</button>
 
-	<div class="xxs:flex hidden min-h-screen flex-col items-center gap-2">
+	<div class="xxs:flex hidden min-h-screen w-full flex-col items-center">
+        <AppNavigation />
+        {#if !$isAuthenticated}<div class="w-full max-w-3xl px-6 py-4"><LoginScreen /></div>{/if}
 		{@render children()}
 	</div>
 {/if}

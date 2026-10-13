@@ -23,6 +23,12 @@ pub struct VoiceContext {
     pub locale: String,
     pub content_mime_types: Option<Vec<String>>,
     pub ime_options: ImeOptions,
+    #[serde(default)]
+    pub supports_dictionary_confirmation: bool,
+    #[serde(default)]
+    pub supports_preference_confirmation: bool,
+    #[serde(default)]
+    pub supports_scoped_preference_confirmation: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -65,6 +71,9 @@ impl Default for VoiceContext {
                 flag_no_enter_action: false,
                 flag_no_personalized_learning: false,
             },
+            supports_dictionary_confirmation: true,
+            supports_preference_confirmation: true,
+            supports_scoped_preference_confirmation: true,
         }
     }
 }

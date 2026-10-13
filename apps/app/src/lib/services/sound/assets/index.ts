@@ -1,4 +1,4 @@
-import type { WhisperingSoundNames } from '$lib/constants/sounds';
+import type { WhisperMeSoundNames } from '$lib/constants/sounds';
 import {
 	default as captureVadSoundSrc,
 	default as stopManualSoundSrc,
@@ -22,4 +22,4 @@ export const audioElements = {
 	'vad-stop': new Audio(stopVadSoundSrc),
 	transcriptionComplete: new Audio(transcriptionCompleteSoundSrc),
 	transformationComplete: new Audio(transformationCompleteSoundSrc),
-} satisfies Record<WhisperingSoundNames, HTMLAudioElement>;
+} satisfies Record<WhisperMeSoundNames, HTMLAudioElement>;

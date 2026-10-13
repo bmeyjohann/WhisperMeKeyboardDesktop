@@ -28,7 +28,7 @@ export function createClipboardServiceWeb(): ClipboardService {
 				// 		: Err({
 				// 				name: 'ClipboardServiceError',
 				// 				message:
-				// 					'There was an error copying to the clipboard using the Whispering extension. Please try again.',
+				// 					'There was an error copying to the clipboard using the WhisperMe extension. Please try again.',
 				// 				context: { text },
 				// 				cause: extensionSetClipboardError,
 				// 			});
@@ -46,10 +46,10 @@ export function createClipboardServiceWeb(): ClipboardService {
 			// if (writeTextToCursorError) {
 			// 	if (writeTextToCursorError.name === 'ExtensionNotAvailableError') {
 			// 		return Err({
-			// 			name: 'WhisperingError',
+			// 			name: 'WhisperMeError',
 			// 			title: '⚠️ Extension Not Available',
 			// 			description:
-			// 				'The Whispering extension is not available. Please install it to enable writing transcribed text to the cursor.',
+			// 				'The WhisperMe extension is not available. Please install it to enable writing transcribed text to the cursor.',
 			// 			action: { type: 'more-details', error: writeTextToCursorError },
 			// 			context: { text },
 			// 			cause: writeTextToCursorError,
@@ -58,7 +58,7 @@ export function createClipboardServiceWeb(): ClipboardService {
 			// 	return Err({
 			// 		name: 'ClipboardServiceError',
 			// 		message:
-			// 			'There was an error writing transcribed text to the cursor using the Whispering extension. Please try again.',
+			// 			'There was an error writing transcribed text to the cursor using the WhisperMe extension. Please try again.',
 			// 		context: { text },
 			// 		cause: writeTextToCursorError,
 			// 	});

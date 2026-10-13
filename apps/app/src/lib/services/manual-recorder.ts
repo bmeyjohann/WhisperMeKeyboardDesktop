@@ -1,8 +1,9 @@
 // import { extension } from '@repo/extension';
 import {
 	TIMESLICE_MS,
+	type DevRecordingInputMode,
 	type CancelRecordingResult,
-	type WhisperingRecordingState,
+	type WhisperMeRecordingState,
 } from '$lib/constants/audio';
 import { Err, Ok, type Result, tryAsync, trySync } from 'wellcrafted/result';
 import type { TaggedError } from 'wellcrafted/error';
@@ -16,7 +17,8 @@ import {
 
 type RecordingServiceError = TaggedError<'RecordingServiceError'>;
 
-type ActiveRecording = {
+type RealActiveRecording = {
+	kind: 'real';
 	selectedDeviceId: string | null;
 	bitrateKbps: string;
 	stream: MediaStream;
@@ -24,12 +26,22 @@ type ActiveRecording = {
 	recordedChunks: Blob[];
 };
 
+type MockActiveRecording = {
+	kind: 'mock';
+	selectedDeviceId: string | null;
+	bitrateKbps: string;
+	devInputMode: Exclude<DevRecordingInputMode, 'microphone'>;
+	devSampleAudioUrl: string;
+};
+
+type ActiveRecording = RealActiveRecording | MockActiveRecording;
+
 export function createManualRecorderService() {
 	let activeRecording: ActiveRecording | null = null;
 
 	return {
 		getRecorderState: (): Result<
-			WhisperingRecordingState,
+			WhisperMeRecordingState,
 			RecordingServiceError
 		> => {
 			return Ok(activeRecording ? 'RECORDING' : 'IDLE');
@@ -41,9 +53,13 @@ export function createManualRecorderService() {
 			{
 				selectedDeviceId,
 				bitrateKbps,
+				devInputMode,
+				devSampleAudioUrl,
 			}: {
 				selectedDeviceId: string | null;
 				bitrateKbps: string;
+				devInputMode: DevRecordingInputMode;
+				devSampleAudioUrl: string;
 			},
 			{ sendStatus }: { sendStatus: UpdateStatusMessageFn },
 		): Promise<Result<DeviceAcquisitionOutcome, RecordingServiceError>> => {
@@ -56,6 +72,27 @@ export function createManualRecorderService() {
 					context: { activeRecording },
 					cause: undefined,
 				});
+			}
+
+			if (devInputMode !== 'microphone') {
+				sendStatus({
+					title:
+						devInputMode === 'sample'
+							? '🧪 Dev sample mode active'
+							: '🧪 Dev recording disabled',
+					description:
+						devInputMode === 'sample'
+							? 'Microphone capture is bypassed. WhisperMe will use sample audio when you stop.'
+							: 'Microphone capture is bypassed. WhisperMe will use a generated synthetic sample when you stop.',
+				});
+				activeRecording = {
+					kind: 'mock',
+					selectedDeviceId,
+					bitrateKbps,
+					devInputMode,
+					devSampleAudioUrl,
+				};
+				return Ok({ outcome: 'success' });
 			}
 
 			sendStatus({
@@ -95,6 +132,7 @@ export function createManualRecorderService() {
 
 			// Store active recording state
 			activeRecording = {
+				kind: 'real',
 				selectedDeviceId,
 				bitrateKbps,
 				stream,
@@ -116,9 +154,9 @@ export function createManualRecorderService() {
 
 		stopRecording: async ({
 			sendStatus,
-		}: { sendStatus: UpdateStatusMessageFn }): Promise<
-			Result<Blob, RecordingServiceError>
-		> => {
+		}: {
+			sendStatus: UpdateStatusMessageFn;
+		}): Promise<Result<Blob, RecordingServiceError>> => {
 			if (!activeRecording) {
 				return Err({
 					name: 'RecordingServiceError',
@@ -131,6 +169,27 @@ export function createManualRecorderService() {
 
 			const recording = activeRecording;
 			activeRecording = null; // Clear immediately to prevent race conditions
+
+			if (recording.kind === 'mock') {
+				sendStatus({
+					title: '🧪 Generating Dev Audio',
+					description:
+						recording.devInputMode === 'sample'
+							? 'Loading sample audio for transcription...'
+							: 'Generating synthetic audio sample...',
+				});
+				const { data: blob, error: mockBlobError } =
+					recording.devInputMode === 'sample'
+						? await getSampleAudioBlob(recording.devSampleAudioUrl)
+						: createGeneratedDevAudioBlob();
+				if (mockBlobError) return Err(mockBlobError);
+
+				sendStatus({
+					title: '✅ Dev Sample Ready',
+					description: 'Using non-microphone audio for this recording.',
+				});
+				return Ok(blob);
+			}
 
 			sendStatus({
 				title: '⏸️ Finishing Recording',
@@ -176,9 +235,9 @@ export function createManualRecorderService() {
 
 		cancelRecording: async ({
 			sendStatus,
-		}: { sendStatus: UpdateStatusMessageFn }): Promise<
-			Result<CancelRecordingResult, RecordingServiceError>
-		> => {
+		}: {
+			sendStatus: UpdateStatusMessageFn;
+		}): Promise<Result<CancelRecordingResult, RecordingServiceError>> => {
 			if (!activeRecording) {
 				return Ok({ status: 'no-recording' });
 			}
@@ -192,10 +251,12 @@ export function createManualRecorderService() {
 			});
 
 			// Stop the recorder
-			recording.mediaRecorder.stop();
+			if (recording.kind === 'real') {
+				recording.mediaRecorder.stop();
 
-			// Clean up the stream
-			cleanupRecordingStream(recording.stream);
+				// Clean up the stream
+				cleanupRecordingStream(recording.stream);
+			}
 
 			sendStatus({
 				title: '✨ Cancelled',
@@ -208,3 +269,77 @@ export function createManualRecorderService() {
 }
 
 export const NavigatorRecorderServiceLive = createManualRecorderService();
+
+function createGeneratedDevAudioBlob(): Result<Blob, RecordingServiceError> {
+	const durationSeconds = 1.5;
+	const sampleRate = 16000;
+	const channels = 1;
+	const frequencyHz = 440;
+	const frameCount = Math.floor(sampleRate * durationSeconds);
+	const dataSize = frameCount * channels * 2;
+	const headerSize = 44;
+	const buffer = new ArrayBuffer(headerSize + dataSize);
+	const view = new DataView(buffer);
+
+	writeAscii(view, 0, 'RIFF');
+	view.setUint32(4, 36 + dataSize, true);
+	writeAscii(view, 8, 'WAVE');
+	writeAscii(view, 12, 'fmt ');
+	view.setUint32(16, 16, true);
+	view.setUint16(20, 1, true);
+	view.setUint16(22, channels, true);
+	view.setUint32(24, sampleRate, true);
+	view.setUint32(28, sampleRate * channels * 2, true);
+	view.setUint16(32, channels * 2, true);
+	view.setUint16(34, 16, true);
+	writeAscii(view, 36, 'data');
+	view.setUint32(40, dataSize, true);
+
+	for (let i = 0; i < frameCount; i++) {
+		const sample = Math.sin((2 * Math.PI * frequencyHz * i) / sampleRate);
+		const amplitude = 0.18 * sample;
+		view.setInt16(headerSize + i * 2, Math.floor(amplitude * 0x7fff), true);
+	}
+
+	return Ok(new Blob([buffer], { type: 'audio/wav' }));
+}
+
+async function getSampleAudioBlob(
+	sampleAudioUrl: string,
+): Promise<Result<Blob, RecordingServiceError>> {
+	if (!sampleAudioUrl.trim()) {
+		return createGeneratedDevAudioBlob();
+	}
+
+	return tryAsync({
+		try: async () => {
+			const response = await fetch(sampleAudioUrl);
+			if (!response.ok) {
+				throw new Error(
+					`Sample audio request failed with status ${response.status}`,
+				);
+			}
+			const blob = await response.blob();
+			if (blob.size === 0) {
+				throw new Error('Sample audio file is empty');
+			}
+			return blob;
+		},
+		mapError: (error): RecordingServiceError => ({
+			name: 'RecordingServiceError',
+			message:
+				'Failed to load sample audio URL for dev recording mode. Falling back to generated synthetic audio.',
+			context: { sampleAudioUrl },
+			cause: error,
+		}),
+	}).then((result) => {
+		if (!result.error) return result;
+		return createGeneratedDevAudioBlob();
+	});
+}
+
+function writeAscii(view: DataView, offset: number, value: string) {
+	for (let i = 0; i < value.length; i++) {
+		view.setUint8(offset + i, value.charCodeAt(i));
+	}
+}

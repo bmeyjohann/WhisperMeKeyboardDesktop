@@ -6,7 +6,7 @@
 	import { createQuery } from '@tanstack/svelte-query';
 	import type { Transformation } from '$lib/services/db';
 	import { LayersIcon } from 'lucide-svelte';
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import { Badge } from '$lib/components/ui/badge';
 	import { useCombobox } from '$lib/components/useCombobox.svelte';
 
@@ -41,7 +41,7 @@
 <Popover.Root bind:open={combobox.open}>
 	<Popover.Trigger bind:ref={combobox.triggerRef}>
 		{#snippet child({ props })}
-			<WhisperingButton
+			<WhisperMeButton
 				{...props}
 				class={className}
 				tooltipContent="Run a post-processing transformation to run on your recording"
@@ -51,7 +51,7 @@
 				size="icon"
 			>
 				<LayersIcon class="size-4" />
-			</WhisperingButton>
+			</WhisperMeButton>
 		{/snippet}
 	</Popover.Trigger>
 	<Popover.Content class="w-80 max-w-xl p-0">

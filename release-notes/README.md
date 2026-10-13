@@ -1,6 +1,6 @@
 # Release Notes System
 
-This directory contains all release notes for Whispering. The release notes serve two important purposes:
+This directory contains all release notes for WhisperMe. The release notes serve two important purposes:
 
 1. **Update Dialog Summary** - A concise summary shown to users in the app's update dialog
 2. **GitHub Release Description** - Full release notes for the GitHub release page
@@ -27,7 +27,7 @@ Each release file must include:
 ### Summary Section (Required)
 ```markdown
 <!-- SUMMARY:START -->
-## Whispering vX.X.X - Brief Title
+## WhisperMe vX.X.X - Brief Title
 
 Major highlights:
 • Key feature or improvement 1

@@ -1,7 +1,7 @@
 import * as services from '$lib/services';
-import type { WhisperingRecordingState } from '$lib/constants/audio';
+import type { WhisperMeRecordingState } from '$lib/constants/audio';
 import { settings } from '$lib/stores/settings.svelte';
-import type { WhisperingError } from '$lib/result';
+import type { WhisperMeError } from '$lib/result';
 import { Err, Ok, type Result } from 'wellcrafted/result';
 import { defineMutation } from './_utils';
 
@@ -15,13 +15,13 @@ export const tray = {
 		resultMutationFn: async ({
 			icon,
 		}: {
-			icon: WhisperingRecordingState;
-		}): Promise<Result<void, WhisperingError>> => {
+			icon: WhisperMeRecordingState;
+		}): Promise<Result<void, WhisperMeError>> => {
 			const { data, error } = await services.tray.setTrayIcon(icon);
 
 			if (error) {
 				return Err({
-					name: 'WhisperingError',
+					name: 'WhisperMeError',
 					title: '⚠️ Failed to set tray icon',
 					description: error.message,
 					action: { type: 'more-details', error },

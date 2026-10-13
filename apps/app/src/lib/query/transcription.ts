@@ -3,7 +3,7 @@ import * as services from '$lib/services';
 import { toast } from '$lib/toast';
 import { settings } from '$lib/stores/settings.svelte';
 import { Err, Ok, type Result, partitionResults } from 'wellcrafted/result';
-import type { WhisperingError } from '$lib/result';
+import type { WhisperMeError } from '$lib/result';
 import { defineMutation } from './_utils';
 import { queryClient } from './index';
 import { recordings } from './recordings';
@@ -24,10 +24,10 @@ export const transcription = {
 		mutationKey: transcriptionKeys.isTranscribing,
 		resultMutationFn: async (
 			recording: Recording,
-		): Promise<Result<string, WhisperingError>> => {
+		): Promise<Result<string, WhisperMeError>> => {
 			if (!recording.blob) {
 				return Err({
-					name: 'WhisperingError',
+					name: 'WhisperMeError',
 					title: '⚠️ Recording blob not found',
 					description: "Your recording doesn't have a blob to transcribe.",
 				});
@@ -98,10 +98,10 @@ export const transcription = {
 				recordings.map(async (recording) => {
 					if (!recording.blob) {
 						return Err({
-							name: 'WhisperingError',
+							name: 'WhisperMeError',
 							title: '⚠️ Recording blob not found',
 							description: "Your recording doesn't have a blob to transcribe.",
-						} satisfies WhisperingError);
+						} satisfies WhisperMeError);
 					}
 					return await transcribeBlob(recording.blob);
 				}),
@@ -114,7 +114,7 @@ export const transcription = {
 
 async function transcribeBlob(
 	blob: Blob,
-): Promise<Result<string, WhisperingError>> {
+): Promise<Result<string, WhisperMeError>> {
 	const selectedService =
 		settings.value['transcription.selectedTranscriptionService'];
 
@@ -156,6 +156,8 @@ async function transcribeBlob(
 				outputLanguage: settings.value['transcription.outputLanguage'],
 				prompt: settings.value['transcription.prompt'],
 				temperature: settings.value['transcription.temperature'],
+				transcriptionProvider: settings.value['voiceInput.transcriptionProvider'],
+				llmProvider: settings.value['voiceInput.llmProvider'],
 			});
 	}
 }

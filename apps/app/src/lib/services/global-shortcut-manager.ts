@@ -41,7 +41,7 @@ export function createGlobalShortcutManager() {
 			on,
 		}: {
 			accelerator: Accelerator;
-			callback: () => void;
+			callback: (state?: 'Pressed' | 'Released') => void;
 			on: ShortcutTriggerState;
 		}): Promise<
 			Result<void, InvalidAcceleratorError | GlobalShortcutServiceError>
@@ -58,19 +58,22 @@ export function createGlobalShortcutManager() {
 				});
 			}
 
+			let pressed = false;
 			const { error: registerError } = await tryAsync({
 				try: () =>
 					tauriRegister(accelerator, (event) => {
+                        if (event.state === 'Pressed') { if (pressed) return; pressed = true; }
+                        else { if (!pressed) return; pressed = false; }
 						if (on === 'Both') {
-							callback();
+							callback(event.state);
 							return;
 						}
 						if (on === 'Pressed' && event.state === 'Pressed') {
-							callback();
+							callback(event.state);
 							return;
 						}
 						if (on === 'Released' && event.state === 'Released') {
-							callback();
+							callback(event.state);
 							return;
 						}
 					}),

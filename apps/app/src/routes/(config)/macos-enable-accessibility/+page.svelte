@@ -14,9 +14,9 @@
 		<Card.Header>
 			<Card.Title class="text-xl">MacOS Accessibility</Card.Title>
 			<Card.Description class="leading-7">
-				Follow the steps below to re-enable Whispering in your MacOS
+				Follow the steps below to re-enable WhisperMe in your MacOS
 				Accessibility settings. This often is needed after installing a new
-				version of Whispering to get pasting to work, as detailed in this
+				version of WhisperMe to get pasting to work, as detailed in this
 				<Button
 					variant="link"
 					size="inline"
@@ -35,7 +35,7 @@
 			<div class="flex flex-col items-center gap-2">
 				<video
 					class="max-w-md"
-					src="https://github.com/braden-w/whispering/raw/main/images/macos_enable_accessibility.mp4"
+					src="https://github.com/whisperme/desktop-app/raw/main/images/macos_enable_accessibility.mp4"
 					autoplay
 					loop
 					controls
@@ -51,13 +51,13 @@
 
 					<li>
 						Click on <span class="text-primary font-semibold tracking-tight"
-							>🎙️ Whispering</span
+							>🎙️ WhisperMe</span
 						> and remove it using the minus icon (-).
 					</li>
 					<li>
-						Re-add Whispering by pressing the plus icon (+) and selecting <span
+						Re-add WhisperMe by pressing the plus icon (+) and selecting <span
 							class="text-primary font-semibold tracking-tight"
-							>🎙️ Whispering.app</span
+							>🎙️ WhisperMe.app</span
 						>
 					</li>
 				</ol>

@@ -3,7 +3,7 @@
 	import { mergeProps } from 'bits-ui';
 	import { nanoid } from 'nanoid/non-secure';
 	import type { Snippet } from 'svelte';
-	import WhisperingTooltip from './WhisperingTooltip.svelte';
+	import WhisperMeTooltip from './WhisperMeTooltip.svelte';
 
 	let {
 		id = nanoid(),
@@ -13,7 +13,7 @@
 	}: Props & { id?: string; tooltipContent: string | Snippet } = $props();
 </script>
 
-<WhisperingTooltip {id} {tooltipContent}>
+<WhisperMeTooltip {id} {tooltipContent}>
 	{#snippet trigger({ tooltipProps, tooltip })}
 		<Button {...mergeProps(tooltipProps, buttonProps)}>
 			{@render children?.()}
@@ -22,4 +22,4 @@
 			</span>
 		</Button>
 	{/snippet}
-</WhisperingTooltip>
+</WhisperMeTooltip>

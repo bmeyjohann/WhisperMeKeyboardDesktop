@@ -1,189 +1,183 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recording Overlay</title>
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: transparent;
-            overflow: hidden;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-app-region: drag;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Recording Overlay</title>
+		<style>
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				width: 100%;
+				height: 100%;
+				font-family:
+					-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+				background: transparent;
+				overflow: hidden;
+				user-select: none;
+				-webkit-user-select: none;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				pointer-events: none;
+			}
 
-        .overlay {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px 16px;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            min-width: 160px;
-            max-width: 180px;
-            -webkit-app-region: no-drag;
-            position: relative;
-        }
+			.overlay {
+				display: inline-flex;
+				align-items: center;
+				gap: 10px;
+				padding: 12px 16px;
+				min-width: 180px;
+				border-radius: 12px;
+				border: 1px solid rgba(255, 255, 255, 0.25);
+				background: rgba(0, 0, 0, 0.8);
+				color: #fff;
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+				cursor: pointer;
+				transition: background-color 0.2s ease;
+				pointer-events: auto;
+			}
 
-        .overlay:hover {
-            background: rgba(0, 0, 0, 0.85);
-            transform: scale(1.02);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
+			.overlay:hover {
+				background: rgba(0, 0, 0, 0.9);
+			}
 
-        .overlay:active {
-            transform: scale(0.98);
-        }
+			.dot {
+				width: 12px;
+				height: 12px;
+				border-radius: 50%;
+				background: #f97316;
+				animation: spin 1s linear infinite;
+				flex-shrink: 0;
+			}
 
-        .icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 8px;
-            flex-shrink: 0;
-            position: relative;
-            display: inline-block;
-        }
+			.overlay.recording .dot {
+				background: #ef4444;
+				animation: pulse 1.2s ease-in-out infinite;
+			}
 
-        .icon.recording {
-            background: #ff4444;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
+			.text {
+				font-size: 13px;
+				font-weight: 600;
+				line-height: 1;
+				white-space: nowrap;
+			}
 
-        .icon.processing {
-            background: #ffa500;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
+			@keyframes pulse {
+				0%,
+				100% {
+					transform: scale(1);
+					opacity: 1;
+				}
+				50% {
+					transform: scale(1.2);
+					opacity: 0.65;
+				}
+			}
 
-        @keyframes pulse {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.1); }
-            100% { opacity: 1; transform: scale(1); }
-        }
+			@keyframes spin {
+				from {
+					transform: rotate(0deg);
+				}
+				to {
+					transform: rotate(360deg);
+				}
+			}
+		#voice-transcript { color: white; max-height: 48px; overflow: auto; margin-top: 8px; line-height: 1.4; font-size: 14px; }
+#voice-assistant { max-height: 35px; overflow: auto; color: #93c5fd; line-height: 1.4; font-size: 13px; margin-top: 6px; }
+.overlay { width: 400px; max-height: 154px; box-sizing: border-box; }
+#voice-actions { margin-top: 6px; } #voice-actions button { margin-right: 8px; border: 1px solid #64748b; border-radius: 6px; padding: 3px 8px; background: #1e293b; color: white; cursor: pointer; }
+#voice-connection, #voice-retry, #voice-budget { flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #cbd5e1; font-size: 12px; line-height: 1.4; text-align: center; }
+#voice-connection:empty, #voice-retry:empty, #voice-budget:empty { display: none; }
+#voice-retry, #voice-budget { color: #fcd34d; }
+</style>
+	</head>
+	<body>
+		<div id="overlay" class="overlay recording">
+			<div class="dot"></div>
+			<div><div id="text" class="text">Recording... Click to stop</div><div id="voice-transcript" aria-live="polite"></div><div id="voice-connection" role="status"></div><div id="voice-retry" role="status"></div><div id="voice-budget" role="status"></div><div id="voice-assistant" aria-live="polite"></div><div id="voice-actions" hidden><button id="voice-copy">Copy result</button><button id="voice-dismiss">Dismiss</button></div></div>
+		</div>
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+		<script>
+			const invoke =
+				window.__TAURI_INTERNALS__?.invoke ??
+				window.__TAURI__?.core?.invoke ??
+				window.__TAURI__?.invoke;
+			const listen =
+				window.__TAURI__?.event?.listen ?? window.__TAURI__?.listen;
 
-        .text {
-            color: white;
-            font-size: 14px;
-            font-weight: 500;
-            white-space: nowrap;
-        }
+			window.__WM_RENDER_VOICE = () => { const data = window.__WM_VOICE || {}; if (data.phase) document.getElementById('text').textContent = ({connecting:'Connecting…', recording:'Listening · click to finish', processing:'Finishing…', idle:'Voice session ended'})[data.phase]; document.getElementById('voice-transcript').textContent = data.result ?? data.transcript ?? ''; document.getElementById('voice-connection').textContent = data.connectionStatus || ''; document.getElementById('voice-retry').textContent = data.retryText || ''; document.getElementById('voice-budget').textContent = data.budgetWarning || '';
+  for (const id of ['voice-connection', 'voice-retry', 'voice-budget']) document.getElementById(id).title = document.getElementById(id).textContent;
+  document.getElementById('voice-assistant').textContent = data.assistant || ''; document.getElementById('voice-actions').hidden = data.phase !== 'idle'; document.getElementById('voice-copy').textContent = typeof data.result === 'string' ? 'Copy result' : 'Copy transcript'; const transcript = document.getElementById('voice-transcript'); transcript.scrollTop = transcript.scrollHeight; };
+			const overlay = document.getElementById('overlay');
+			const text = document.getElementById('text');
+			let currentState = 'Recording';
 
-        .hidden {
-            display: none;
-        }
+			const normalizeState = (state) => {
+				if (typeof state !== 'string') return 'Hidden';
+				const normalized = state.toLowerCase();
+				if (normalized === 'recording') return 'Recording';
+				if (normalized === 'processing') return 'Processing';
+				return 'Hidden';
+			};
 
-        /* Microphone icon using CSS */
-        .icon.recording::before {
-            content: '';
-            position: absolute;
-            width: 12px;
-            height: 16px;
-            background: white;
-            border-radius: 6px 6px 0 0;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -60%);
-            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
-        }
+			const updateOverlayState = (state) => {
+				currentState = normalizeState(state);
 
-        .icon.processing::before {
-            content: '';
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: white;
-            border-radius: 50%;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-    </style>
-</head>
-<body>
-    <div class="overlay" id="overlay" onclick="handleOverlayClick()">
-        <div class="icon recording" id="icon"></div>
-        <div class="text" id="text">Recording... (Click to stop)</div>
-    </div>
+				if (currentState === 'Hidden') {
+					overlay.style.display = 'none';
+					return;
+				}
 
-    <script>
-        // Import the Tauri API
-        const { invoke } = window.__TAURI__.core;
-        const { listen } = window.__TAURI__.event;
+				overlay.style.display = 'inline-flex';
+				overlay.classList.toggle('recording', currentState === 'Recording');
+				text.textContent =
+					currentState === 'Recording'
+						? 'Recording... Click to stop'
+						: 'Processing...';
+			};
+			window.__WM_OVERLAY_SET_STATE = updateOverlayState;
 
-        let currentState = 'recording';
+			if (listen) {
+				listen('overlay-state-changed', (event) => {
+					updateOverlayState(event.payload);
+				});
+			}
 
-        // Listen for state changes from Rust
-        listen('overlay-state-changed', (event) => {
-            updateOverlayState(event.payload);
-        });
+			const syncOverlayStateFromBackend = async () => {
+				if (!invoke) return;
+				try {
+					const state = await invoke('get_overlay_state');
+					updateOverlayState(state);
+				} catch (error) {
+					console.error('Failed to get initial overlay state:', error);
+				}
+			};
 
-        function updateOverlayState(state) {
-            const icon = document.getElementById('icon');
-            const text = document.getElementById('text');
-            
-            console.log('Overlay state updated:', state);
-            currentState = state;
-            
-            switch(state) {
-                case 'Recording':
-                    icon.className = 'icon recording';
-                    text.textContent = 'Recording... (Click to stop)';
-                    break;
-                case 'Processing':
-                    icon.className = 'icon processing';
-                    text.textContent = 'Processing...';
-                    break;
-                case 'Hidden':
-                    // Hide the overlay
-                    document.getElementById('overlay').style.display = 'none';
-                    break;
-                default:
-                    icon.className = 'icon recording';
-                    text.textContent = 'Recording...';
-            }
-        }
+			document.getElementById('voice-copy').addEventListener('click', async (event) => { event.stopPropagation(); const data = window.__WM_VOICE || {}; if (invoke) await invoke('plugin:clipboard-manager|write_text', { text: data.result ?? data.transcript ?? '' }); });
+            document.getElementById('voice-dismiss').addEventListener('click', async (event) => { event.stopPropagation(); if (invoke) await invoke('hide_recording_overlay'); });
+            overlay.addEventListener('click', async () => {
+                if (window.__WM_VOICE?.phase === 'idle') return;
+				if (currentState !== 'Recording' || !invoke) return;
+				try {
+					await invoke('stop_recording_from_overlay');
+				} catch (error) {
+					console.error('Failed to stop recording from overlay:', error);
+				}
+			});
 
-        async function handleOverlayClick() {
-            console.log('Overlay clicked, current state:', currentState);
-            
-            if (currentState === 'Recording') {
-                try {
-                    await invoke('stop_recording_from_overlay');
-                    console.log('Stop recording requested from overlay');
-                } catch (error) {
-                    console.error('Failed to stop recording from overlay:', error);
-                }
-            }
-        }
+			document.addEventListener('contextmenu', (event) =>
+				event.preventDefault(),
+			);
+			document.addEventListener('selectstart', (event) =>
+				event.preventDefault(),
+			);
 
-        // Prevent text selection and context menu
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
-        document.addEventListener('selectstart', (e) => e.preventDefault());
-
-        // Initialize with recording state
-        updateOverlayState('Recording');
-    </script>
-</body>
-</html> 
+			updateOverlayState('Hidden');
+			syncOverlayStateFromBackend();
+		</script>
+	</body>
+</html>

@@ -1,12 +1,49 @@
+import { createTapHoldShortcut } from './services/tap-hold-shortcut';
+import { usesRealtimeVoice, isVoiceSessionActive, toggleRealtimeVoice, cancelRealtimeVoice } from './services/realtime-voice';
 import { rpc } from '$lib/query';
 import { settings } from '$lib/stores/settings.svelte';
 import { toast } from '$lib/toast';
+import { invoke as tauriInvoke } from '@tauri-apps/api/core';
 import { nanoid } from 'nanoid/non-secure';
 import {
 	deliverTranscribedText,
 	deliverTransformedText,
 } from './deliverTextToUser';
 import type { ShortcutTriggerState } from './services/_shortcut-trigger-state';
+import { auth0Service } from './services/auth0';
+
+async function sessionReadyForRecording() {
+    if (settings.value['transcription.selectedTranscriptionService'] !== 'WhisperMe') return true;
+    if (await auth0Service.getVoiceAccessToken()) return true;
+    toast.error({ id: nanoid(), title: 'Sign-in check required', description: 'Open WhisperMe and sign in or retry the session check before recording. No audio was recorded.' });
+    return false;
+}
+
+type OverlayDisplayState = 'recording' | 'processing' | 'hidden';
+
+const overlayCommandByState = {
+	recording: 'show_recording_overlay',
+	processing: 'show_processing_overlay',
+	hidden: 'hide_recording_overlay',
+} as const satisfies Record<OverlayDisplayState, string>;
+
+function shouldRenderRecordingOverlay() {
+	return (
+		typeof window !== 'undefined' &&
+		Boolean(window.__TAURI_INTERNALS__) &&
+		settings.value['overlay.enabled']
+	);
+}
+
+async function setRecordingOverlayState(state: OverlayDisplayState) {
+	if (!shouldRenderRecordingOverlay()) return;
+
+	try {
+		await tauriInvoke(overlayCommandByState[state]);
+	} catch (error) {
+		console.warn(`Failed to set recording overlay state to ${state}`, error);
+	}
+}
 
 const stopManualRecording = async () => {
 	const toastId = nanoid();
@@ -24,6 +61,7 @@ const stopManualRecording = async () => {
 			description: 'Your recording could not be stopped. Please try again.',
 			action: { type: 'more-details', error: stopRecordingError },
 		});
+		await setRecordingOverlayState('hidden');
 		return;
 	}
 
@@ -34,6 +72,7 @@ const stopManualRecording = async () => {
 	});
 	console.info('Recording stopped');
 	rpc.sound.playSoundIfEnabled.execute('manual-stop');
+	await setRecordingOverlayState('processing');
 
 	await saveRecordingAndTranscribeTransform({
 		blob,
@@ -44,12 +83,14 @@ const stopManualRecording = async () => {
 };
 
 const startManualRecording = async () => {
+    if (!(await sessionReadyForRecording())) return;
 	const toastId = nanoid();
 	toast.loading({
 		id: toastId,
 		title: '🎙️ Preparing to record...',
 		description: 'Setting up your recording environment...',
 	});
+
 	const { data: deviceAcquisitionOutcome, error: startRecordingError } =
 		await rpc.manualRecorder.startRecording.execute({
 			toastId,
@@ -62,6 +103,7 @@ const startManualRecording = async () => {
 			description: 'Your recording could not be started. Please try again.',
 			action: { type: 'more-details', error: startRecordingError },
 		});
+		await setRecordingOverlayState('hidden');
 		return;
 	}
 
@@ -69,7 +111,7 @@ const startManualRecording = async () => {
 		case 'success': {
 			toast.success({
 				id: toastId,
-				title: '🎙️ Whispering is recording...',
+				title: '🎙️ WhisperMe is recording...',
 				description: 'Speak now and stop recording when done',
 			});
 			break;
@@ -114,6 +156,7 @@ const startManualRecording = async () => {
 	}
 	console.info('Recording started');
 	rpc.sound.playSoundIfEnabled.execute('manual-start');
+	await setRecordingOverlayState('recording');
 };
 
 const stopCpalRecording = async () => {
@@ -132,6 +175,7 @@ const stopCpalRecording = async () => {
 			description: 'Your recording could not be stopped. Please try again.',
 			action: { type: 'more-details', error: stopRecordingError },
 		});
+		await setRecordingOverlayState('hidden');
 		return;
 	}
 
@@ -142,6 +186,7 @@ const stopCpalRecording = async () => {
 	});
 	console.info('CPAL Recording stopped');
 	rpc.sound.playSoundIfEnabled.execute('cpal-stop');
+	await setRecordingOverlayState('processing');
 
 	await saveRecordingAndTranscribeTransform({
 		blob,
@@ -152,12 +197,14 @@ const stopCpalRecording = async () => {
 };
 
 const startCpalRecording = async () => {
+    if (!(await sessionReadyForRecording())) return;
 	const toastId = nanoid();
 	toast.loading({
 		id: toastId,
 		title: '🔊 Preparing CPAL recording...',
 		description: 'Setting up native audio recording...',
 	});
+
 	const { error: startRecordingError } =
 		await rpc.cpalRecorder.startRecording.execute({
 			toastId,
@@ -171,6 +218,7 @@ const startCpalRecording = async () => {
 			description: 'Your recording could not be started. Please try again.',
 			action: { type: 'more-details', error: startRecordingError },
 		});
+		await setRecordingOverlayState('hidden');
 		return;
 	}
 
@@ -181,22 +229,35 @@ const startCpalRecording = async () => {
 	});
 	console.info('CPAL Recording started');
 	rpc.sound.playSoundIfEnabled.execute('cpal-start');
-
-	// Show the recording overlay
-	try {
-		await invoke('show_recording_overlay');
-		console.info('Recording overlay shown for CPAL');
-	} catch (error) {
-		console.warn('Failed to show recording overlay for CPAL:', error);
-	}
+	await setRecordingOverlayState('recording');
 };
 
 type SatisfiedCommand = {
 	id: string;
 	title: string;
 	on: ShortcutTriggerState;
-	callback: () => void;
+	callback: (state?: 'Pressed' | 'Released' | MouseEvent) => void;
 };
+
+// Realtime reserves its phase synchronously; do not wait for provider startup before
+// accepting a release. Batch capture serializes its asynchronous microphone startup.
+const recordingShortcut = createTapHoldShortcut(async () => {
+    if (usesRealtimeVoice()) {
+        const started = !isVoiceSessionActive();
+        void toggleRealtimeVoice();
+        return started;
+    }
+    const {data, error} = await rpc.manualRecorder.getRecorderState.fetchCached();
+    if (error) return false;
+    if (data === 'RECORDING') { await stopManualRecording(); return false; }
+    await startManualRecording();
+    const state = await rpc.manualRecorder.getRecorderState.fetchCached();
+    return !state.error && state.data === 'RECORDING';
+}, async () => {
+    if (usesRealtimeVoice()) { if (isVoiceSessionActive()) await toggleRealtimeVoice(); return; }
+    const {data, error} = await rpc.manualRecorder.getRecorderState.fetchCached();
+    if (!error && data === 'RECORDING') await stopManualRecording();
+});
 
 export const commands = [
 	{
@@ -204,6 +265,7 @@ export const commands = [
 		title: 'Push to talk',
 		on: 'Both',
 		callback: async () => {
+			if (usesRealtimeVoice()) return toggleRealtimeVoice();
 			const { data: recorderState, error: getRecorderStateError } =
 				await rpc.manualRecorder.getRecorderState.fetchCached();
 			if (getRecorderStateError) {
@@ -224,9 +286,11 @@ export const commands = [
 	},
 	{
 		id: 'toggleManualRecording',
-		title: 'Toggle recording',
-		on: 'Pressed',
-		callback: async () => {
+		title: 'Record (tap or hold)',
+		on: 'Both',
+		callback: async (state?: 'Pressed' | 'Released' | MouseEvent) => {
+            if (state === 'Pressed' || state === 'Released') { recordingShortcut(state); return; }
+			if (usesRealtimeVoice()) return toggleRealtimeVoice();
 			const { data: recorderState, error: getRecorderStateError } =
 				await rpc.manualRecorder.getRecorderState.fetchCached();
 			if (getRecorderStateError) {
@@ -250,6 +314,7 @@ export const commands = [
 		title: 'Cancel recording',
 		on: 'Pressed',
 		callback: async () => {
+			if (usesRealtimeVoice()) return cancelRealtimeVoice();
 			const toastId = nanoid();
 			toast.loading({
 				id: toastId,
@@ -275,6 +340,7 @@ export const commands = [
 						title: 'No active recording',
 						description: 'There is no recording in progress to cancel.',
 					});
+					await setRecordingOverlayState('hidden');
 					break;
 				}
 				case 'cancelled': {
@@ -286,6 +352,7 @@ export const commands = [
 					});
 					rpc.sound.playSoundIfEnabled.execute('manual-cancel');
 					console.info('Recording cancelled');
+					await setRecordingOverlayState('hidden');
 					break;
 				}
 			}
@@ -296,6 +363,7 @@ export const commands = [
 		title: 'Toggle voice activated recording',
 		on: 'Pressed',
 		callback: async () => {
+			if (usesRealtimeVoice()) return toggleRealtimeVoice();
 			const { data: vadState } =
 				await rpc.vadRecorder.getVadState.fetchCached();
 			if (vadState === 'LISTENING' || vadState === 'SPEECH_DETECTED') {
@@ -321,12 +389,14 @@ export const commands = [
 				return;
 			}
 			const toastId = nanoid();
+			if (!(await sessionReadyForRecording())) return;
 			console.info('Starting voice activated capture');
 			toast.loading({
 				id: toastId,
 				title: '🎙️ Starting voice activated capture',
 				description: 'Your voice activated capture is starting...',
 			});
+
 			const {
 				data: deviceAcquisitionOutcome,
 				error: startActiveListeningError,
@@ -420,6 +490,7 @@ export const commands = [
 					title: 'Toggle CPAL recording',
 					on: 'Pressed',
 					callback: async () => {
+			if (usesRealtimeVoice()) return toggleRealtimeVoice();
 						const { data: recorderState, error: getRecorderStateError } =
 							await rpc.cpalRecorder.getRecorderState.fetchCached();
 						if (getRecorderStateError) {
@@ -444,6 +515,7 @@ export const commands = [
 					title: 'Cancel CPAL recording',
 					on: 'Pressed',
 					callback: async () => {
+			if (usesRealtimeVoice()) return cancelRealtimeVoice();
 						const toastId = nanoid();
 						toast.loading({
 							id: toastId,
@@ -470,6 +542,7 @@ export const commands = [
 									description:
 										'There is no CPAL recording in progress to cancel.',
 								});
+								await setRecordingOverlayState('hidden');
 								break;
 							}
 							case 'cancelled': {
@@ -480,6 +553,7 @@ export const commands = [
 								});
 								rpc.sound.playSoundIfEnabled.execute('cpal-cancel');
 								console.info('CPAL Recording cancelled');
+								await setRecordingOverlayState('hidden');
 								break;
 							}
 						}
@@ -529,140 +603,145 @@ async function saveRecordingAndTranscribeTransform({
 }) {
 	const now = new Date().toISOString();
 	const newRecordingId = nanoid();
+	try {
+		const { data: createdRecording, error: createRecordingError } =
+			await rpc.recordings.createRecording.execute({
+				id: newRecordingId,
+				title: '',
+				subtitle: '',
+				createdAt: now,
+				updatedAt: now,
+				timestamp: now,
+				transcribedText: '',
+				blob,
+				transcriptionStatus: 'UNPROCESSED',
+			});
 
-	const { data: createdRecording, error: createRecordingError } =
-		await rpc.recordings.createRecording.execute({
-			id: newRecordingId,
-			title: '',
-			subtitle: '',
-			createdAt: now,
-			updatedAt: now,
-			timestamp: now,
-			transcribedText: '',
-			blob,
-			transcriptionStatus: 'UNPROCESSED',
-		});
-
-	if (createRecordingError) {
-		toast.error({
-			id: toastId,
-			title: '❌ Failed to save recording',
-			description:
-				'Your recording was captured but could not be saved to the database. Please check your storage space and permissions.',
-			action: { type: 'more-details', error: createRecordingError },
-		});
-		return;
-	}
-
-	toast.success({
-		id: toastId,
-		title: completionTitle,
-		description: completionDescription,
-	});
-
-	const transcribeToastId = nanoid();
-	toast.loading({
-		id: transcribeToastId,
-		title: '📋 Transcribing...',
-		description: 'Your recording is being transcribed...',
-	});
-
-	const { data: transcribedText, error: transcribeError } =
-		await rpc.transcription.transcribeRecording.execute(createdRecording);
-
-	if (transcribeError) {
-		if (transcribeError.name === 'WhisperingError') {
-			toast.error({ id: transcribeToastId, ...transcribeError });
+		if (createRecordingError) {
+			toast.error({
+				id: toastId,
+				title: '❌ Failed to save recording',
+				description:
+					'Your recording was captured but could not be saved to the database. Please check your storage space and permissions.',
+				action: { type: 'more-details', error: createRecordingError },
+			});
 			return;
 		}
-		toast.error({
+
+		toast.success({
+			id: toastId,
+			title: completionTitle,
+			description: completionDescription,
+		});
+
+		const transcribeToastId = nanoid();
+		toast.loading({
 			id: transcribeToastId,
-			title: '❌ Failed to transcribe recording',
-			description: 'Your recording could not be transcribed.',
-			action: { type: 'more-details', error: transcribeError },
+			title: '📋 Transcribing...',
+			description: 'Your recording is being transcribed...',
 		});
-		return;
-	}
 
-	rpc.sound.playSoundIfEnabled.execute('transcriptionComplete');
+		const { data: transcribedText, error: transcribeError } =
+			await rpc.transcription.transcribeRecording.execute(createdRecording);
 
-	await deliverTranscribedText({
-		text: transcribedText,
-		toastId: transcribeToastId,
-	});
+		if (transcribeError) {
+			if (transcribeError.name === 'WhisperMeError') {
+				toast.error({ id: transcribeToastId, ...transcribeError });
+				return;
+			}
+			toast.error({
+				id: transcribeToastId,
+				title: '❌ Failed to transcribe recording',
+				description: 'Your recording could not be transcribed.',
+				action: { type: 'more-details', error: transcribeError },
+			});
+			return;
+		}
 
-	// Determine if we need to chain to transformation
-	const transformationId =
-		settings.value['transformations.selectedTransformationId'];
+		rpc.sound.playSoundIfEnabled.execute('transcriptionComplete');
 
-	// Check if transformation is valid if specified
-	if (!transformationId) return;
-	const { data: transformation, error: getTransformationError } =
-		await rpc.transformations.queries
-			.getTransformationById(() => transformationId)
-			.fetchCached();
-
-	const couldNotRetrieveTransformation = getTransformationError;
-	const transformationNoLongerExists = !transformation;
-
-	if (couldNotRetrieveTransformation) {
-		toast.error({
-			id: nanoid(),
-			title: '❌ Failed to get transformation',
-			description:
-				'Your transformation could not be retrieved. Please try again.',
-			action: { type: 'more-details', error: getTransformationError },
+		await deliverTranscribedText({
+			text: transcribedText,
+			toastId: transcribeToastId,
 		});
-		return;
-	}
+		// Notice-only voice controls return no text and must not feed automatic transformations.
+		if (!transcribedText) return;
 
-	if (transformationNoLongerExists) {
-		settings.value = {
-			...settings.value,
-			'transformations.selectedTransformationId': null,
-		};
-		toast.warning({
-			id: nanoid(),
-			title: '⚠️ No matching transformation found',
-			description:
-				'No matching transformation found. Please select a different transformation.',
-			action: {
-				type: 'link',
-				label: 'Select a different transformation',
-				goto: '/transformations',
-			},
-		});
-		return;
-	}
+		// Determine if we need to chain to transformation
+		const transformationId =
+			settings.value['transformations.selectedTransformationId'];
 
-	const transformToastId = nanoid();
-	toast.loading({
-		id: transformToastId,
-		title: '🔄 Running transformation...',
-		description:
-			'Applying your selected transformation to the transcribed text...',
-	});
-	const { data: transformationRun, error: transformError } =
-		await rpc.transformer.transformRecording.execute({
-			recordingId: createdRecording.id,
-			transformation,
-		});
-	if (transformError) {
-		toast.error({ id: transformToastId, ...transformError });
-		return;
-	}
+		// Check if transformation is valid if specified
+		if (!transformationId) return;
+		const { data: transformation, error: getTransformationError } =
+			await rpc.transformations.queries
+				.getTransformationById(() => transformationId)
+				.fetchCached();
 
-	if (transformationRun.status === 'failed') {
-		toast.error({
+		const couldNotRetrieveTransformation = getTransformationError;
+		const transformationNoLongerExists = !transformation;
+
+		if (couldNotRetrieveTransformation) {
+			toast.error({
+				id: nanoid(),
+				title: '❌ Failed to get transformation',
+				description:
+					'Your transformation could not be retrieved. Please try again.',
+				action: { type: 'more-details', error: getTransformationError },
+			});
+			return;
+		}
+
+		if (transformationNoLongerExists) {
+			settings.value = {
+				...settings.value,
+				'transformations.selectedTransformationId': null,
+			};
+			toast.warning({
+				id: nanoid(),
+				title: '⚠️ No matching transformation found',
+				description:
+					'No matching transformation found. Please select a different transformation.',
+				action: {
+					type: 'link',
+					label: 'Select a different transformation',
+					goto: '/transformations',
+				},
+			});
+			return;
+		}
+
+		const transformToastId = nanoid();
+		toast.loading({
 			id: transformToastId,
-			title: '⚠️ Transformation error',
-			description: transformationRun.error,
-			action: { type: 'more-details', error: transformationRun.error },
+			title: '🔄 Running transformation...',
+			description:
+				'Applying your selected transformation to the transcribed text...',
 		});
-		return;
+		const { data: transformationRun, error: transformError } =
+			await rpc.transformer.transformRecording.execute({
+				recordingId: createdRecording.id,
+				transformation,
+			});
+		if (transformError) {
+			toast.error({ id: transformToastId, ...transformError });
+			return;
+		}
+
+		if (transformationRun.status === 'failed') {
+			toast.error({
+				id: transformToastId,
+				title: '⚠️ Transformation error',
+				description: transformationRun.error,
+				action: { type: 'more-details', error: transformationRun.error },
+			});
+			return;
+		}
+
+		rpc.sound.playSoundIfEnabled.execute('transformationComplete');
+
+		await deliverTransformedText({ text: transformationRun.output, toastId });
+	} finally {
+		await setRecordingOverlayState('hidden');
 	}
-
-	rpc.sound.playSoundIfEnabled.execute('transformationComplete');
-
-	await deliverTransformedText({ text: transformationRun.output, toastId });
 }

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import WhisperingButton from '$lib/components/WhisperingButton.svelte';
+	import WhisperMeButton from '$lib/components/WhisperMeButton.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { rpc } from '$lib/query';
@@ -20,14 +20,14 @@
 <Dialog.Root bind:open={isOpen}>
 	<Dialog.Trigger>
 		{#snippet child({ props })}
-			<WhisperingButton
+			<WhisperMeButton
 				{...props}
 				variant="ghost"
 				size="icon"
 				tooltipContent="View Transformation Runs"
 			>
 				<HistoryIcon class="size-4" />
-			</WhisperingButton>
+			</WhisperMeButton>
 		{/snippet}
 	</Dialog.Trigger>
 	<Dialog.Content class="sm:max-w-4xl">

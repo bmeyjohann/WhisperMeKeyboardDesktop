@@ -1,5 +1,5 @@
 {
-	"name": "whispering",
+	"name": "whisperme",
 	"private": true,
 	"version": "7.0.0",
 	"description": "",
@@ -9,8 +9,12 @@
 	"scripts": {
 		"build": "turbo run build",
 		"dev": "turbo run dev",
-		"format": "concurrently \"biome format --write .\" \"turbo run format --filter=@repo/app\"",
-		"lint": "concurrently \"biome lint --write --unsafe .\" \"turbo run lint --filter=@repo/app\"",
+		"dev:desktop": "pnpm --filter @whisperme/desktop-app dev",
+		"build:desktop:debug": "pnpm --filter @whisperme/desktop-app tauri build --debug --no-bundle",
+		"build:desktop:release": "pnpm --filter @whisperme/desktop-app tauri build --no-bundle",
+		"build:desktop:nsis": "pnpm --filter @whisperme/desktop-app tauri build --bundles nsis",
+		"format": "concurrently \"biome format --write .\" \"turbo run format --filter=@whisperme/desktop-app\"",
+		"lint": "concurrently \"biome lint .\" \"turbo run lint --filter=@whisperme/desktop-app\"",
 		"format-and-lint": "concurrently \"biome check --write --unsafe .\" \"turbo run format --filter=@repo/app && turbo run lint --filter=@repo/app\"",
 		"bump-version": "bun run scripts/bump-version.ts"
 	},

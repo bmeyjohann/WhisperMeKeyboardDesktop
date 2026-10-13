@@ -1,26 +1,26 @@
 <p align="center">
-  <a href="https://whispering.bradenwong.com">
-    <img width="180" src="./apps/app/src-tauri/recorder-state-icons/studio_microphone.png" alt="Whispering">
+  <a href="https://whisperme.app">
+    <img width="180" src="./apps/app/src-tauri/recorder-state-icons/studio_microphone.png" alt="WhisperMe">
   </a>
-  <h1 align="center">Whispering</h1>
+  <h1 align="center">WhisperMe</h1>
   <p align="center">Press shortcut → speak → get text. Free and open source.</p>
 </p>
 
 <p align="center">
   <!-- Latest Version Badge -->
-  <img src="https://img.shields.io/github/v/release/braden-w/whispering?style=flat-square&label=Latest%20Version&color=brightgreen" />
+  <img src="https://img.shields.io/github/v/release/braden-w/whisperme?style=flat-square&label=Latest%20Version&color=brightgreen" />
   <!-- License Badge -->
   <a href="LICENSE" target="_blank">
-    <img alt="MIT License" src="https://img.shields.io/github/license/braden-w/whispering.svg?style=flat-square" />
+    <img alt="MIT License" src="https://img.shields.io/github/license/braden-w/whisperme.svg?style=flat-square" />
   </a>
   <!-- Platform Support Badges -->
-  <a href="https://github.com/braden-w/whispering/releases" target="_blank">
+  <a href="https://github.com/whisperme/desktop-app/releases" target="_blank">
     <img alt="macOS" src="https://img.shields.io/badge/-macOS-black?style=flat-square&logo=apple&logoColor=white" />
   </a>
-  <a href="https://github.com/braden-w/whispering/releases" target="_blank">
+  <a href="https://github.com/whisperme/desktop-app/releases" target="_blank">
     <img alt="Windows" src="https://img.shields.io/badge/-Windows-blue?style=flat-square&logo=windows&logoColor=white" />
   </a>
-  <a href="https://github.com/braden-w/whispering/releases" target="_blank">
+  <a href="https://github.com/whisperme/desktop-app/releases" target="_blank">
     <img alt="Linux" src="https://img.shields.io/badge/-Linux-yellow?style=flat-square&logo=linux&logoColor=white" />
   </a>
   <!-- Tech Stack Badges -->
@@ -30,21 +30,31 @@
   <img alt="Rust" src="https://img.shields.io/badge/-Rust-orange?style=flat-square&logo=rust&logoColor=white" />
 </p>
 
-## What is Whispering?
+## What is WhisperMe?
+
+### Experimental voice preferences and diagnostics
+
+Voice Processing settings include an off-by-default switch for saved preferences and writing style. Profiles can target all apps, an exact app identifier, or a manually assigned app category; exact app wins over category, then the general profile. Casual/formal presets and sample-based extraction produce editable instructions. Extraction sends the sample to the selected backend LLM; the raw sample is not saved in a profile. Saved account rules can be viewed, edited and deleted separately. Disabling preferences prevents their use during dictation.
+
+“Save context and prompts” is a separate opt-in. Expand **Context and prompts** in Transcripts to inspect actual supplied editor context, related fields, model requests and tool results. Traces are bounded and report truncation; they never include audio, credentials or private model reasoning. History is not automatically sent as conversation memory. Delete a session to delete its local trace.
+
+The default realtime editor window contains up to 2,000 UTF-16 units on either side of the selection and up to 8,000 selected units. Final processing may request up to 12,000 units per side, at most twice. Related-field context is separately bounded. Unavailable or truncated context is not a complete document.
+
+Startup and recording preflight check whether the configured backend accepts the session. A rejected token is refreshed once before asking for login; temporary failures preserve credentials for retry. If final processing fails after a complete ASR transcript arrives, **Retry processing** is available for the latest session while the app remains open. It does not replay partial captions or automatically retry an uncertain insertion.
 
 Press a shortcut anywhere on your desktop → speak → get text in your clipboard. That's it.
 
 **Try it in 2 minutes:** [Quick Start](#quick-start) | [Watch Demo (30s)](#demo)
 
-Whispering is the transcription app I built because I believe productivity tools should be free and accessible to everyone.
+WhisperMe is the transcription app I built because I believe productivity tools should be free and accessible to everyone.
 
-Whispering is free and open source—you own your data, you audit the code, and you control your privacy.
+WhisperMe is free and open source—you own your data, you audit the code, and you control your privacy.
 
 Bring your own API key from providers like `OpenAI`, `Groq`, or `ElevenLabs`, and pay only cents per hour instead of monthly subscriptions. Or use a local transcription service like `Speaches`, which keeps everything free and on-device. Your audio goes directly to your chosen service.
 
 Open source. No tracking. No paywalls.
 
-> **Note**: Whispering is designed for quick transcriptions, not long recordings. For extended recording sessions, use a dedicated recording app.
+> **Note**: WhisperMe is designed for quick transcriptions, not long recordings. For extended recording sessions, use a dedicated recording app.
 
 ## Demo
 
@@ -59,7 +69,7 @@ I was tired of the usual SaaS problems:
 - **Limited options.** Most services use OpenAI's Whisper behind the scenes anyway, but you can't switch providers, can't use faster models, and can't go local when you need privacy.
 - **Things just disappear.** Companies pivot, get acquired, or shut down. Then you're stuck migrating your workflows and retraining your muscle memory.
 
-So I built Whispering the way transcription should work:
+So I built WhisperMe the way transcription should work:
 
 - **No middleman** - Your audio goes straight to the provider you choose (or stays fully local)
 - **Your keys, your costs** - Pay OpenAI/Groq/whoever directly at actual rates: $0.02-$0.18/hour instead of $20/month
@@ -67,7 +77,7 @@ So I built Whispering the way transcription should work:
 
 ### Cost Comparison
 
-With Whispering, you pay providers directly instead of marked-up subscription prices:
+With WhisperMe, you pay providers directly instead of marked-up subscription prices:
 
 | Service | Cost per Hour | Light Use (20 min/day) | Moderate Use (1 hr/day) | Heavy Use (3 hr/day) | Traditional Tools |
 |---------|---------------|------------------------|-------------------------|----------------------|-------------------|
@@ -80,16 +90,16 @@ With Whispering, you pay providers directly instead of marked-up subscription pr
 
 **Get transcribing in 2 minutes** → Press shortcut, speak, get text
 
-### 1️⃣ Install Whispering
+### 1️⃣ Install WhisperMe
 
-Visit the [GitHub Releases page](https://github.com/braden-w/whispering/releases/latest) and download the right version for your system:
+Visit the [GitHub Releases page](https://github.com/whisperme/desktop-app/releases/latest) and download the right version for your system:
 
 <details>
 <summary><strong>🍎 macOS</strong></summary>
 
 **Choose your version:**
-- **Apple Silicon** (M1/M2/M3): `Whispering_x.x.x_aarch64.dmg`
-- **Intel**: `Whispering_x.x.x_x64.dmg`
+- **Apple Silicon** (M1/M2/M3): `WhisperMe_x.x.x_aarch64.dmg`
+- **Intel**: `WhisperMe_x.x.x_x64.dmg`
 
 <details>
 <summary>Not sure which Mac you have?</summary>
@@ -103,8 +113,8 @@ Click the Apple menu → About This Mac:
 **Installation:**
 1. Download the `.dmg` file
 2. Double-click to open
-3. Drag Whispering to your Applications folder
-4. Open Whispering from your Applications folder
+3. Drag WhisperMe to your Applications folder
+4. Open WhisperMe from your Applications folder
 
 <details>
 <summary><strong>Troubleshooting</strong></summary>
@@ -113,7 +123,7 @@ Click the Apple menu → About This Mac:
 - Right-click the app → select "Open"
 
 **Apple Silicon users - If you see "app is damaged":**
-- Run this command in Terminal: `xattr -cr /Applications/Whispering.app`
+- Run this command in Terminal: `xattr -cr /Applications/WhisperMe.app`
 
 </details>
 
@@ -123,8 +133,8 @@ Click the Apple menu → About This Mac:
 <summary><strong>🪟 Windows</strong></summary>
 
 **Download:**
-- Installer: `Whispering_x.x.x_x64_en-US.msi` (recommended)
-- Alternative: `Whispering_x.x.x_x64-setup.exe`
+- Installer: `WhisperMe_x.x.x_x64_en-US.msi` (recommended)
+- Alternative: `WhisperMe_x.x.x_x64-setup.exe`
 
 **Installation:**
 1. Download the `.msi` installer
@@ -138,9 +148,9 @@ Click the Apple menu → About This Mac:
 <summary><strong>🐧 Linux</strong></summary>
 
 **Choose your format:**
-- **AppImage** (universal): `Whispering_x.x.x_amd64.AppImage`
-- **Debian/Ubuntu**: `Whispering_x.x.x_amd64.deb`
-- **Fedora/RHEL**: `Whispering-x.x.x-1.x86_64.rpm`
+- **AppImage** (universal): `WhisperMe_x.x.x_amd64.AppImage`
+- **Debian/Ubuntu**: `WhisperMe_x.x.x_amd64.deb`
+- **Fedora/RHEL**: `WhisperMe-x.x.x-1.x86_64.rpm`
 
 **Installation:**
 
@@ -148,8 +158,8 @@ Click the Apple menu → About This Mac:
 <summary>AppImage</summary>
 
 ```bash
-chmod +x Whispering_x.x.x_amd64.AppImage
-./Whispering_x.x.x_amd64.AppImage
+chmod +x WhisperMe_x.x.x_amd64.AppImage
+./WhisperMe_x.x.x_amd64.AppImage
 ```
 
 </details>
@@ -158,7 +168,7 @@ chmod +x Whispering_x.x.x_amd64.AppImage
 <summary>DEB (Debian/Ubuntu)</summary>
 
 ```bash
-sudo dpkg -i Whispering_x.x.x_amd64.deb
+sudo dpkg -i WhisperMe_x.x.x_amd64.deb
 ```
 
 </details>
@@ -167,7 +177,7 @@ sudo dpkg -i Whispering_x.x.x_amd64.deb
 <summary>RPM (Fedora/RHEL)</summary>
 
 ```bash
-sudo rpm -i Whispering-x.x.x-1.x86_64.rpm
+sudo rpm -i WhisperMe-x.x.x-1.x86_64.rpm
 ```
 
 </details>
@@ -177,7 +187,7 @@ sudo rpm -i Whispering-x.x.x-1.x86_64.rpm
 <details>
 <summary><strong>🌐 Web App</strong></summary>
 
-No installation needed! Visit [whispering.bradenwong.com](https://whispering.bradenwong.com) in your browser. The web version has most but not all features of the desktop app (no global shortcuts).
+No installation needed! Visit [whisperme.app](https://whisperme.app) in your browser. The web version has most but not all features of the desktop app (no global shortcuts).
 
 </details>
 
@@ -194,10 +204,10 @@ Right now, I personally use **Groq** for almost all my transcriptions.
 
 ### 3️⃣ Connect & Test
 
-1. Open Whispering
+1. Open WhisperMe
 2. Click **Settings** (⚙️) → **Transcription**
 3. Select **Groq** → Paste your API key where it says `Groq API Key`
-4. Click the recording button (or press `Cmd+Shift+;` anywhere) and say "Testing Whispering"
+4. Click the recording button (or press `Cmd+Shift+;` anywhere) and say "Testing WhisperMe"
 
 **🎉 Success!** Your words are now in your clipboard. Paste anywhere!
 
@@ -206,7 +216,7 @@ Right now, I personally use **Groq** for almost all my transcriptions.
 ### Common Issues
 
 - **No transcription?** → Double-check API key in Settings
-- **Shortcut not working?** → Bring Whispering to foreground (see macOS section below)
+- **Shortcut not working?** → Bring WhisperMe to foreground (see macOS section below)
 - **Wrong provider selected?** → Check Settings → Transcription
 
 <details>
@@ -215,47 +225,47 @@ Right now, I personally use **Groq** for almost all my transcriptions.
 This happens due to macOS App Nap, which suspends background apps to save battery.
 
 **Quick fixes:**
-1. Bring Whispering to the foreground briefly to restore shortcuts
+1. Bring WhisperMe to the foreground briefly to restore shortcuts
 2. Keep the app window in the foreground (even as a smaller window)
 3. Use Voice Activated mode for hands-free operation
 
-**Best practice:** Keep Whispering in the foreground in front of other apps. You can resize it to a smaller window or use Voice Activated mode for minimal disruption.
+**Best practice:** Keep WhisperMe in the foreground in front of other apps. You can resize it to a smaller window or use Voice Activated mode for minimal disruption.
 
 </details>
 
 <details>
 <summary><strong>Accidentally rejected microphone permissions?</strong></summary>
 
-If you accidentally clicked "Don't Allow" when Whispering asked for microphone access, here's how to fix it:
+If you accidentally clicked "Don't Allow" when WhisperMe asked for microphone access, here's how to fix it:
 
 #### 🍎 macOS
 1. Open **System Settings** → **Privacy & Security** → **Privacy** → **Microphone**
-2. Find **Whispering** in the list
+2. Find **WhisperMe** in the list
 3. Toggle the switch to enable microphone access
-4. If Whispering isn't in the list, reinstall the app to trigger the permission prompt again
+4. If WhisperMe isn't in the list, reinstall the app to trigger the permission prompt again
 
 #### 🪟 Windows
 If you accidentally blocked microphone permissions, use the Registry solution:
 
 **Registry Cleanup (Recommended)**
-1. Close Whispering
+1. Close WhisperMe
 2. Open Registry Editor (Win+R, type `regedit`)
-3. Use Find (Ctrl+F) to search for "Whispering"
-4. Delete all registry folders containing "Whispering"
+3. Use Find (Ctrl+F) to search for "WhisperMe"
+4. Delete all registry folders containing "WhisperMe"
 5. Press F3 to find next, repeat until all instances are removed
-6. Uninstall and reinstall Whispering
+6. Uninstall and reinstall WhisperMe
 7. Accept permissions when prompted
 
 <details>
 <summary>Alternative solutions</summary>
 
-**Delete App Data:** Navigate to `%APPDATA%\..\Local\com.bradenwong.whispering` and delete this folder, then reinstall.
+**Delete App Data:** Navigate to `%APPDATA%\..\Local\com.bradenwong.whisperme` and delete this folder, then reinstall.
 
 **Windows Settings:** Settings → Privacy & security → Microphone → Enable "Let desktop apps access your microphone"
 
 </details>
 
-See [Issue #526](https://github.com/braden-w/whispering/issues/526) for more details.
+See [Issue #526](https://github.com/whisperme/desktop-app/issues/526) for more details.
 
 </details>
 
@@ -379,7 +389,7 @@ Change the recording shortcut to whatever feels natural:
 
 ## How is my data stored?
 
-Whispering stores as much data as possible locally on your device, including recordings and text transcriptions. This approach ensures maximum privacy and data security. Here's an overview of how data is handled:
+WhisperMe stores as much data as possible locally on your device, including recordings and text transcriptions. This approach ensures maximum privacy and data security. Here's an overview of how data is handled:
 
 1. **Local Storage**: Voice recordings and transcriptions are stored in IndexedDB, which is used as blob storage and a place to store all of your data like text and transcriptions.
 
@@ -387,7 +397,7 @@ Whispering stores as much data as possible locally on your device, including rec
    - External services like OpenAI, Groq, or ElevenLabs (with your own API keys)
    - A local transcription service such as Speaches, which keeps everything on-device
 
-3. **Transformation Service (Optional)**: Whispering includes configurable transformation settings that allow you to pipe transcription output into custom transformation flows. These flows can leverage:
+3. **Transformation Service (Optional)**: WhisperMe includes configurable transformation settings that allow you to pipe transcription output into custom transformation flows. These flows can leverage:
    - External Large Language Models (LLMs) like OpenAI's GPT-4, Anthropic's Claude, Google's Gemini, or Groq's Llama models
    - Hosted LLMs within your custom workflows for advanced text processing
    - Simple find-and-replace operations for basic text modifications
@@ -400,7 +410,7 @@ You can change both the transcription and transformation services in the setting
 
 ### Built With Modern Web Technologies
 
-Whispering showcases the power of modern web development as a comprehensive example application:
+WhisperMe showcases the power of modern web development as a comprehensive example application:
 
 #### Web and Desktop
 - [Svelte 5](https://svelte.dev): The UI reactivity library of choice with cutting-edge runes system
@@ -433,7 +443,7 @@ Whispering showcases the power of modern web development as a comprehensive exam
 
 ### Architecture Deep Dive
 
-Whispering uses a clean three-layer architecture that separates concerns and makes the codebase easy to understand and extend:
+WhisperMe uses a clean three-layer architecture that separates concerns and makes the codebase easy to understand and extend:
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌──────────────┐
@@ -469,9 +479,9 @@ This dual interface design provides both reactive state management for UI compon
 
 #### Error Handling with WellCrafted
 
-Whispering uses [WellCrafted](https://github.com/wellcrafted-dev/wellcrafted), a lightweight TypeScript library I created to bring Rust-inspired error handling to JavaScript. I built WellCrafted specifically to solve the error handling challenges in Whispering, and now use it throughout the codebase. Unlike traditional try-catch blocks that hide errors, WellCrafted makes all potential failures explicit in function signatures using the `Result<T, E>` pattern.
+WhisperMe uses [WellCrafted](https://github.com/wellcrafted-dev/wellcrafted), a lightweight TypeScript library I created to bring Rust-inspired error handling to JavaScript. I built WellCrafted specifically to solve the error handling challenges in WhisperMe, and now use it throughout the codebase. Unlike traditional try-catch blocks that hide errors, WellCrafted makes all potential failures explicit in function signatures using the `Result<T, E>` pattern.
 
-**Key benefits in Whispering:**
+**Key benefits in WhisperMe:**
 - **Explicit errors**: Every function that can fail returns `Result<T, E>`, making errors impossible to ignore
 - **Type safety**: TypeScript knows exactly what errors each function can produce
 - **Serialization-safe**: Errors are plain objects that survive JSON serialization (critical for Tauri IPC)
@@ -480,10 +490,10 @@ Whispering uses [WellCrafted](https://github.com/wellcrafted-dev/wellcrafted), a
 
 This approach ensures robust error handling across the entire codebase, from service layer functions to UI components, while maintaining excellent developer experience with TypeScript's control flow analysis.
 
-### Run Whispering in Local Development Mode
+### Run WhisperMe in Local Development Mode
 
-1. Clone the repository: `git clone https://github.com/braden-w/whispering.git`
-2. Change into the project directory: `cd whispering`
+1. Clone the repository: `git clone https://github.com/whisperme/desktop-app.git`
+2. Change into the project directory: `cd whisperme`
 3. Install the necessary dependencies: `pnpm i`
 
 To run the desktop app and website:
@@ -510,7 +520,7 @@ Find the executable in `apps/app/target/release`
 
 ### Contributing
 
-We welcome contributions! Whispering is built with care and attention to clean, maintainable code.
+We welcome contributions! WhisperMe is built with care and attention to clean, maintainable code.
 
 #### Code Style Guidelines
 - Follow existing TypeScript and Svelte patterns throughout
@@ -535,21 +545,21 @@ Note: WellCrafted is a TypeScript utility library I created to bring Rust-inspir
 - Performance optimizations
 - New transcription or transformation service integrations
 
-Feel free to suggest and implement any features that improve usability—I'll do my best to integrate contributions that make Whispering better for everyone.
+Feel free to suggest and implement any features that improve usability—I'll do my best to integrate contributions that make WhisperMe better for everyone.
 
 ## Support and Community
 
 ### License
 
-Whispering is released under the [MIT License](LICENSE). Use it, modify it, learn from it, and build upon it freely.
+WhisperMe is released under the [MIT License](LICENSE). Use it, modify it, learn from it, and build upon it freely.
 
 ### Support and Feedback
 
-If you encounter any issues or have suggestions for improvements, please open an issue on the [GitHub issues tab](https://github.com/braden-w/whispering/issues) or contact me via [whispering@bradenwong.com](mailto:whispering@bradenwong.com). I really appreciate your feedback!
+If you encounter any issues or have suggestions for improvements, please open an issue on the [GitHub issues tab](https://github.com/whisperme/desktop-app/issues) or contact me via [whisperme@bradenwong.com](mailto:whisperme@bradenwong.com). I really appreciate your feedback!
 
-- Issues and Bug Reports: [GitHub Issues](https://github.com/braden-w/whispering/issues)
-- Feature Discussions: [GitHub Discussions](https://github.com/braden-w/whispering/discussions)
-- Direct Contact: [whispering@bradenwong.com](mailto:whispering@bradenwong.com)
+- Issues and Bug Reports: [GitHub Issues](https://github.com/whisperme/desktop-app/issues)
+- Feature Discussions: [GitHub Discussions](https://github.com/whisperme/desktop-app/discussions)
+- Direct Contact: [whisperme@bradenwong.com](mailto:whisperme@bradenwong.com)
 
 ### Sponsors
 
@@ -561,4 +571,14 @@ This project is supported by amazing people and organizations:
 
 Transcription should be free, open, and accessible to everyone. Join us in making it so.
 
-Thank you for using Whispering and happy writing!
+Thank you for using WhisperMe and happy writing!
+
+### App navigation
+
+Transcripts is the home screen and the destination of the WhisperMe logo. Voice settings contains account, recording shortcut, microphone selection, and opt-in writing preferences. Tap the recording shortcut to start or finish; holding it for at least one second finishes on release. Saved shortcut mappings are preserved.
+
+Text processing follows the server default, including when older settings migrate. Advanced settings retain the saved explicit provider/model override and offer Default, None, Low, Medium and High reasoning effort; GPT-OSS does not support None. Default leaves reasoning selection to the server/provider. The session history records the resolved provider/model when supplied by the server.
+
+Connection feedback measures WhisperMe round-trip acknowledgements and missing heartbeats using native timers. A delayed acknowledgement does not identify the cause or diagnose the user's internet. Provider retry messages appear separately from speech captions. The Worker owns the two automatic retries; desktop waits up to 90 seconds for realtime ASR startup, 160 seconds for final processing, and 300 seconds for batch HTTP. Batch HTTP displays a general retry notice because it cannot stream progress.
+
+History separates speech, final text, and technical details. Complete provider-confirmed transcripts and an allowlisted recovery payload persist locally across restart, without credentials, audio, editor context, target identity, or saved instructions. Recovery formats the saved speech for manual copying; editing commands are not replayed, and it never inserts into an editor. WebSocket transcript resume streams actual retry progress when advertised; older servers use HTTP with an explicit progress limitation. Partial transcripts are labeled incomplete and cannot be used for processing recovery. Context/prompt diagnostics remain separately opt-in; older sessions without a saved confirmed transcript cannot be reconstructed.

@@ -10,7 +10,7 @@ export function registerOnboarding() {
 	
 	if (!selectedService) {
 		toast.info({
-			title: 'Welcome to Whispering!',
+			title: 'Welcome to WhisperMe!',
 			description: 'Please select a transcription service to get started.',
 			action: {
 				type: 'link',
@@ -21,11 +21,14 @@ export function registerOnboarding() {
 		return;
 	}
 
+	// The account card and session preflight handle sign-in for the managed service.
+	if (selectedService.type === 'authenticated') return;
+
 	if (!isTranscriptionServiceConfigured(selectedService)) {
 		const missingConfig = selectedService.type === 'api' ? `${selectedService.name} API key` : `${selectedService.name} server URL`;
 		
 		toast.info({
-			title: 'Welcome to Whispering!',
+			title: 'Welcome to WhisperMe!',
 			description: `Please configure your ${missingConfig} to get started.`,
 			action: {
 				type: 'link',
